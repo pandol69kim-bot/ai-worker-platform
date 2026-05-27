@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Turbopack has issues with non-ASCII chars in path; use Webpack
+  turbopack: undefined,
 };
 
 export default nextConfig;
