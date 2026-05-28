@@ -4,15 +4,27 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { syncPurchasePaymentStatus } from "@/lib/payments";
 import { formatDate, formatPrice, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Package, TrendingUp, Star, DollarSign, Bot } from "lucide-react";
 
-export default async function DashboardPage() {
+interface DashboardPageProps {
+  searchParams: Promise<{
+    purchase_id?: string;
+  }>;
+}
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as { id: string; role?: string };
+  const params = await searchParams;
+  const purchaseId = params.purchase_id;
+  const purchaseSync = purchaseId
+    ? await syncPurchasePaymentStatus(purchaseId, user.id)
+    : null;
 
   const [myWorkers, purchases, makerProfile] = await Promise.all([
     db.aIWorker.findMany({
@@ -35,6 +47,24 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">대시보드</h1>
+
+      {purchaseSync?.status === "completed" && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          테스트 결제가 완료되었습니다. 도입한 AI 직원 목록에서 바로 사용할 수 있습니다.
+        </div>
+      )}
+
+      {purchaseSync?.status === "pending" && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          결제 확인을 기다리고 있습니다. 잠시 후 새로고침하면 반영됩니다.
+        </div>
+      )}
+
+      {purchaseSync?.status === "failed" && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          결제가 완료되지 않았습니다. 다시 시도해 주세요.
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">

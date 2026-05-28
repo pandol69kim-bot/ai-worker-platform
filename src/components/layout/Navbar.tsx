@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -33,6 +34,7 @@ export function Navbar() {
           </Link>
 
           <div className="hidden items-center gap-1 md:flex">
+            <ThemeToggle />
             <Link href="/market">
               <Button variant="ghost" size="sm" className="gap-1.5">
                 <Store className="h-4 w-4" />
@@ -100,6 +102,9 @@ export function Navbar() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-200 bg-white px-4 py-3 space-y-1">
+          <div className="py-1">
+            <ThemeToggle />
+          </div>
           <Link href="/market" className="flex items-center gap-2 py-2 text-sm text-gray-700 hover:text-indigo-600" onClick={() => setMobileOpen(false)}>
             <Store className="h-4 w-4" /> 마켓
           </Link>

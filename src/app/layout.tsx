@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import { Navbar } from "@/components/layout/Navbar";
@@ -20,7 +21,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${geist.variable} h-full antialiased`}>
+    <html lang="ko" className={`${geist.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(() => {
+            try {
+              const savedTheme = localStorage.getItem('theme-mode');
+              const theme = savedTheme === 'dark' ? 'dark' : 'light';
+              document.documentElement.classList.toggle('dark', theme === 'dark');
+              document.documentElement.setAttribute('data-theme', theme);
+            } catch {}
+          })();`}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col bg-gray-50">
         <SessionProvider>
           <Navbar />
