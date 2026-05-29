@@ -73,10 +73,22 @@ export async function syncPurchasePaymentStatus(purchaseId: string, userId?: str
 
     const makerAmount = latestPurchase.amount * (1 - Number(process.env.PLATFORM_FEE_PERCENT ?? 20) / 100);
 
-    await tx.makerProfile.update({
+    const makerProfile = await tx.makerProfile.findUnique({
       where: { userId: latestPurchase.worker.makerId },
-      data: { totalEarned: { increment: makerAmount } },
     });
+    if (!makerProfile) {
+      await tx.makerProfile.create({
+        data: {
+          userId: latestPurchase.worker.makerId,
+          totalEarned: makerAmount,
+        },
+      });
+    } else {
+      await tx.makerProfile.update({
+        where: { userId: latestPurchase.worker.makerId },
+        data: { totalEarned: { increment: makerAmount } },
+      });
+    }
   });
 
   return {
