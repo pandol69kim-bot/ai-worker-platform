@@ -37,18 +37,18 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="mb-8 flex items-start gap-3 sm:items-center">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600">
           <Shield className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">관리자 패널</h1>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">관리자 패널</h1>
           <p className="text-gray-500 text-sm mt-0.5">AI 직원 검수 및 플랫폼 관리</p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-10">
+      <div className="mb-10 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
           <div className="text-3xl font-bold text-yellow-600">{reviewQueue.length}</div>
           <div className="text-sm text-gray-500 mt-1">검수 대기</div>
@@ -91,25 +91,27 @@ export default async function AdminPage() {
               const statusInfo = WORKER_STATUSES[worker.status as keyof typeof WORKER_STATUSES];
               return (
                 <div key={worker.id} className="rounded-xl border border-gray-200 bg-white p-5">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-gray-900">{worker.title}</h3>
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                           {statusInfo?.label}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-400">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                         <span>카테고리: {getCategoryLabel(worker.category)}</span>
                         <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                         <span>제출: {formatDate(worker.updatedAt)}</span>
                       </div>
                     </div>
-                    <AdminWorkerActions workerId={worker.id} currentStatus={worker.status} />
+                    <div className="self-start lg:self-auto">
+                      <AdminWorkerActions workerId={worker.id} currentStatus={worker.status} />
+                    </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                  <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
                     <div className="rounded-lg bg-gray-50 p-3">
                       <div className="font-medium text-gray-700 mb-1">역할 정의</div>
                       <p className="text-gray-500 line-clamp-3">{worker.roleDefinition}</p>
@@ -146,22 +148,24 @@ export default async function AdminPage() {
               const statusInfo = WORKER_STATUSES[worker.status as keyof typeof WORKER_STATUSES];
               return (
                 <div key={worker.id} className="rounded-xl border border-green-200 bg-white p-5">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-gray-900">{worker.title}</h3>
                         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                           {statusInfo?.label}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-400">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                         <span>카테고리: {getCategoryLabel(worker.category)}</span>
                         <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                         <span>승인: {formatDate(worker.updatedAt)}</span>
                       </div>
                     </div>
-                    <AdminWorkerActions workerId={worker.id} currentStatus={worker.status} />
+                    <div className="self-start lg:self-auto">
+                      <AdminWorkerActions workerId={worker.id} currentStatus={worker.status} />
+                    </div>
                   </div>
 
                   <div className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
