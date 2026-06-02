@@ -1,14 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import path from "path";
 
-const dbUrl = process.env.DATABASE_URL?.replace("file:", "") ?? "./dev.db";
-const absolutePath = path.isAbsolute(dbUrl)
-  ? dbUrl
-  : path.join(process.cwd(), dbUrl.replace("./", ""));
-
-const adapter = new PrismaBetterSqlite3({ url: absolutePath });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const db = new PrismaClient({ adapter });
 
 async function main() {

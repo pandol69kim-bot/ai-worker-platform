@@ -9,6 +9,26 @@ const executeSchema = z.object({
   input: z.string().min(1).max(5000),
 });
 
+function getExecuteErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "error" in error &&
+    typeof error.error === "object" &&
+    error.error !== null &&
+    "message" in error.error &&
+    typeof error.error.message === "string"
+  ) {
+    return error.error.message;
+  }
+
+  return "AI 실행 중 알 수 없는 오류가 발생했습니다.";
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   const user = session?.user as { id?: string } | undefined;
@@ -85,7 +105,13 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
+
+    const errorMessage = getExecuteErrorMessage(error);
     console.error("Execute error:", error);
-    return NextResponse.json({ error: "AI 실행 중 오류가 발생했습니다." }, { status: 500 });
+
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
   }
 }

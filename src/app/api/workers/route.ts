@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 const createWorkerSchema = z.object({
@@ -77,6 +78,18 @@ export async function POST(req: NextRequest) {
   const user = session.user as { id: string; role?: string };
 
   try {
+    const currentUser = await db.user.findUnique({
+      where: { id: user.id },
+      select: { id: true },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "현재 로그인 세션이 만료되었습니다. 다시 로그인해 주세요." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const data = createWorkerSchema.parse(body);
 
@@ -92,6 +105,15 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      return NextResponse.json(
+        { error: "현재 계정 정보를 찾을 수 없습니다. 다시 로그인한 뒤 시도해 주세요." },
+        { status: 401 }
+      );
     }
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
   }
