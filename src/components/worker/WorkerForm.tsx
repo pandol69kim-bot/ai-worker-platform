@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CATEGORIES } from "@/lib/utils";
+import { CATEGORIES, getCategoryLabel, isPresetCategory, normalizeCategoryInput } from "@/lib/utils";
+
+const CUSTOM_CATEGORY_VALUE = "__custom__";
 
 interface WorkerFormProps {
   initialData?: {
@@ -31,6 +33,9 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [useCustomCategory, setUseCustomCategory] = useState(
+    initialData?.category ? !isPresetCategory(initialData.category) : false
+  );
 
   const [form, setForm] = useState({
     title: initialData?.title ?? "",
@@ -50,10 +55,33 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleCategorySelect(value: string) {
+    if (value === CUSTOM_CATEGORY_VALUE) {
+      setUseCustomCategory(true);
+
+      if (isPresetCategory(form.category)) {
+        handleChange("category", "");
+      }
+
+      return;
+    }
+
+    setUseCustomCategory(false);
+    handleChange("category", value);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    const category = normalizeCategoryInput(form.category);
+
+    if (!category) {
+      setError("카테고리를 입력해 주세요.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const url = initialData ? `/api/workers/${initialData.id}` : "/api/workers";
@@ -64,6 +92,7 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          category,
           price: Number(form.price),
         }),
       });
@@ -108,7 +137,10 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="category">카테고리 *</Label>
-            <Select value={form.category} onValueChange={(v) => handleChange("category", v)}>
+            <Select
+              value={useCustomCategory ? CUSTOM_CATEGORY_VALUE : form.category}
+              onValueChange={handleCategorySelect}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="카테고리 선택" />
               </SelectTrigger>
@@ -118,8 +150,24 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
                     {cat.label}
                   </SelectItem>
                 ))}
+                <SelectItem value={CUSTOM_CATEGORY_VALUE}>직접 추가</SelectItem>
               </SelectContent>
             </Select>
+            {useCustomCategory && (
+              <div className="space-y-2 pt-2">
+                <Input
+                  placeholder="예: 요식업, 부동산, 교육"
+                  value={form.category}
+                  onChange={(e) => handleChange("category", e.target.value)}
+                />
+                <p className="text-xs text-gray-500">
+                  새 카테고리는 저장 후 마켓 필터와 썸네일에 바로 반영됩니다.
+                </p>
+              </div>
+            )}
+            {!useCustomCategory && form.category && (
+              <p className="text-xs text-gray-500">현재 선택: {getCategoryLabel(form.category)}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">

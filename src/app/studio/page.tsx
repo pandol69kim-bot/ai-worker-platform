@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { PlusCircle, Edit, Send, Trash2, Eye } from "lucide-react";
 import { getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
@@ -58,9 +59,7 @@ export default async function StudioPage() {
                 key={worker.id}
                 className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 hover:shadow-sm transition-shadow"
               >
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-2xl shrink-0">
-                  🤖
-                </div>
+                <CategoryThumbnail category={worker.category} className="h-12 w-12 shrink-0" compact />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <h3 className="font-semibold text-gray-900 truncate">{worker.title}</h3>

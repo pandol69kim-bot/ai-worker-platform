@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BrainCircuit, Zap, Shield, TrendingUp, ArrowRight, Star, Users, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
+import { CATEGORY_PRESETS } from "@/lib/utils";
 
 async function getStats() {
   const [workerCount, purchaseCount] = await Promise.all([
@@ -12,15 +13,6 @@ async function getStats() {
   ]);
   return { workerCount, purchaseCount };
 }
-
-const FEATURED_CATEGORIES = [
-  { icon: "📣", label: "마케팅", value: "marketing", desc: "카피라이팅, SNS 콘텐츠" },
-  { icon: "⚖️", label: "법무", value: "legal", desc: "계약서 검토, 법률 요약" },
-  { icon: "💰", label: "회계", value: "accounting", desc: "세무 문서, 비용 정리" },
-  { icon: "🎧", label: "고객지원", value: "customer_support", desc: "문의 응대, FAQ 생성" },
-  { icon: "💻", label: "개발", value: "development", desc: "코드 리뷰, 문서 생성" },
-  { icon: "📊", label: "데이터", value: "data", desc: "데이터 분석, 리포트" },
-];
 
 export default async function HomePage() {
   const stats = await getStats();
@@ -82,15 +74,15 @@ export default async function HomePage() {
             <p className="mt-3 text-gray-500">다양한 업무 영역의 전문 AI 직원을 찾아보세요</p>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {FEATURED_CATEGORIES.map((cat) => (
+            {CATEGORY_PRESETS.slice(0, 6).map((cat) => (
               <Link
                 key={cat.value}
-                href={`/market?category=${cat.value}`}
+                href={{ pathname: "/market", query: { category: cat.value } }}
                 className="group flex flex-col items-center rounded-xl border border-gray-200 p-5 text-center transition-all hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5"
               >
                 <span className="text-3xl mb-3">{cat.icon}</span>
                 <span className="font-semibold text-gray-900 text-sm">{cat.label}</span>
-                <span className="text-xs text-gray-500 mt-1">{cat.desc}</span>
+                <span className="text-xs text-gray-500 mt-1">{cat.description}</span>
               </Link>
             ))}
           </div>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Search, Star, TrendingUp, Package } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, getCategoryLabel, CATEGORIES, WORKER_STATUSES } from "@/lib/utils";
+import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
+import { formatPrice, getCategoryLabel, getCategoryOptions } from "@/lib/utils";
 
 interface SearchParams {
   category?: string;
@@ -34,7 +35,7 @@ async function getWorkers(params: SearchParams) {
   const page = parseInt(params.page ?? "1");
   const limit = 12;
 
-  const [workers, total] = await Promise.all([
+  const [workers, total, categoryRows] = await Promise.all([
     db.aIWorker.findMany({
       where,
       orderBy,
@@ -45,9 +46,20 @@ async function getWorkers(params: SearchParams) {
       },
     }),
     db.aIWorker.count({ where }),
+    db.aIWorker.findMany({
+      where: { status: "published" },
+      select: { category: true },
+      distinct: ["category"],
+      orderBy: { category: "asc" },
+    }),
   ]);
 
-  return { workers, total, page, limit };
+  const categoryOptions = getCategoryOptions([
+    ...categoryRows.map((row) => row.category),
+    ...(params.category ? [params.category] : []),
+  ]);
+
+  return { workers, total, page, limit, categoryOptions };
 }
 
 export default async function MarketPage({
@@ -56,7 +68,7 @@ export default async function MarketPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const { workers, total } = await getWorkers(params);
+  const { workers, total, categoryOptions } = await getWorkers(params);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -135,10 +147,10 @@ export default async function MarketPage({
         >
           전체
         </Link>
-        {CATEGORIES.map((cat) => (
+        {categoryOptions.map((cat) => (
           <Link
             key={cat.value}
-            href={`/market?category=${cat.value}`}
+            href={{ pathname: "/market", query: { category: cat.value } }}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               params.category === cat.value
                 ? "bg-gray-900 text-white"
@@ -173,9 +185,7 @@ export default async function MarketPage({
                 href={`/market/${worker.id}`}
                 className="group flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:border-indigo-200 transition-all hover:-translate-y-0.5"
               >
-                <div className="aspect-video bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-                  <span className="text-4xl">🤖</span>
-                </div>
+                <CategoryThumbnail category={worker.category} className="aspect-video" />
                 <div className="p-4 flex flex-col flex-1">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-indigo-600 transition-colors">

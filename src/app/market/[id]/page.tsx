@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
+import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { WorkerExecutor } from "@/components/worker/WorkerExecutor";
 import { PurchaseButton } from "@/components/worker/PurchaseButton";
 
@@ -73,9 +74,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
         <div className="lg:col-span-2 space-y-6">
           <div>
             <div className="flex items-start gap-4 mb-4">
-              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-3xl shrink-0">
-                🤖
-              </div>
+              <CategoryThumbnail category={worker.category} className="h-16 w-16 shrink-0" compact />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{worker.title}</h1>
                 <div className="flex items-center gap-3 mt-1">

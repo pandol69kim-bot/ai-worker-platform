@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { normalizeCategoryInput } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+
+const categorySchema = z
+  .string()
+  .trim()
+  .min(1, "카테고리를 입력해 주세요.")
+  .transform((value) => normalizeCategoryInput(value))
+  .refine((value) => value.length > 0, "카테고리를 입력해 주세요.");
 
 const createWorkerSchema = z.object({
   title: z.string().min(2).max(100),
   description: z.string().min(10).max(2000),
-  category: z.string(),
+  category: categorySchema,
   roleDefinition: z.string().min(10),
   workflow: z.string().min(10),
   prompt: z.string().min(10),
