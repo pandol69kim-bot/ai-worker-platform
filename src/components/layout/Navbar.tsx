@@ -116,6 +116,11 @@ export function Navbar() {
               <Link href="/dashboard" className="flex items-center gap-2 py-2 text-sm text-gray-700 hover:text-indigo-600" onClick={() => setMobileOpen(false)}>
                 <LayoutDashboard className="h-4 w-4" /> 대시보드
               </Link>
+              {user?.role === "admin" && (
+                <Link href="/admin" className="flex items-center gap-2 py-2 text-sm text-gray-700 hover:text-indigo-600" onClick={() => setMobileOpen(false)}>
+                  <Shield className="h-4 w-4" /> 관리자
+                </Link>
+              )}
               <button
                 className="flex w-full items-center gap-2 py-2 text-sm text-red-600"
                 onClick={() => { signOut({ callbackUrl: "/" }); setMobileOpen(false); }}
