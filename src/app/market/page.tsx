@@ -5,7 +5,7 @@ import { Search, Star, TrendingUp, Package } from "lucide-react";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
-import { formatPrice, getCategoryLabel, getCategoryOptions } from "@/lib/utils";
+import { formatPrice, getCategoryLabel, getCategoryMatchValues, getCategoryOptions } from "@/lib/utils";
 
 interface SearchParams {
   category?: string;
@@ -17,7 +17,14 @@ interface SearchParams {
 async function getWorkers(params: SearchParams) {
   const where: Record<string, unknown> = { status: "published" };
 
-  if (params.category) where.category = params.category;
+  if (params.category) {
+    const categoryValues = getCategoryMatchValues(params.category);
+    if (categoryValues.length === 1) {
+      where.category = categoryValues[0];
+    } else if (categoryValues.length > 1) {
+      where.category = { in: categoryValues };
+    }
+  }
   if (params.search) {
     where.OR = [
       { title: { contains: params.search } },

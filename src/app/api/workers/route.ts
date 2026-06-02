@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { normalizeCategoryInput } from "@/lib/utils";
+import { getCategoryMatchValues, normalizeCategoryInput } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
@@ -9,6 +9,7 @@ const categorySchema = z
   .string()
   .trim()
   .min(1, "카테고리를 입력해 주세요.")
+  .max(30, "카테고리는 30자 이하로 입력해 주세요.")
   .transform((value) => normalizeCategoryInput(value))
   .refine((value) => value.length > 0, "카테고리를 입력해 주세요.");
 
@@ -46,7 +47,14 @@ export async function GET(req: NextRequest) {
     if (status !== "all") where.status = status;
   }
 
-  if (category) where.category = category;
+  if (category) {
+    const categoryValues = getCategoryMatchValues(category);
+    if (categoryValues.length === 1) {
+      where.category = categoryValues[0];
+    } else if (categoryValues.length > 1) {
+      where.category = { in: categoryValues };
+    }
+  }
   if (search) {
     where.OR = [
       { title: { contains: search } },

@@ -126,6 +126,16 @@ export function normalizeCategoryInput(value: string): string {
   return normalized;
 }
 
+export function getCategoryMatchValues(value: string): string[] {
+  const normalized = normalizeCategoryInput(value);
+  if (!normalized) return [];
+
+  const preset = CATEGORY_PRESETS.find((category) => category.value === normalized);
+  if (!preset) return [normalized];
+
+  return [preset.value, preset.label];
+}
+
 export function isPresetCategory(value: string): boolean {
   const normalized = normalizeCategoryInput(value);
   return CATEGORY_PRESETS.some((category) => category.value === normalized);
@@ -159,7 +169,7 @@ export function getCategoryVisual(value: string) {
   }
 
   const label = getCategoryLabel(normalized || "other");
-  const fallbackIcon = label.slice(0, 1) || "✨";
+  const fallbackIcon = Array.from(label)[0] || "✨";
 
   return {
     value: normalized,

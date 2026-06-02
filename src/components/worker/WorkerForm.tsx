@@ -158,10 +158,11 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
                 <Input
                   placeholder="예: 요식업, 부동산, 교육"
                   value={form.category}
+                  maxLength={30}
                   onChange={(e) => handleChange("category", e.target.value)}
                 />
                 <p className="text-xs text-gray-500">
-                  새 카테고리는 저장 후 마켓 필터와 썸네일에 바로 반영됩니다.
+                  새 카테고리는 저장 후 해당 AI가 게시되면 마켓 필터와 썸네일에 반영됩니다.
                 </p>
               </div>
             )}

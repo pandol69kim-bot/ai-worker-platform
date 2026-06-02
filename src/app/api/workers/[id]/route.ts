@@ -8,6 +8,7 @@ const categorySchema = z
   .string()
   .trim()
   .min(1, "카테고리를 입력해 주세요.")
+  .max(30, "카테고리는 30자 이하로 입력해 주세요.")
   .transform((value) => normalizeCategoryInput(value))
   .refine((value) => value.length > 0, "카테고리를 입력해 주세요.");
 
