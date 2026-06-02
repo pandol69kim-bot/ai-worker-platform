@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { AdminWorkerActions } from "@/components/worker/AdminWorkerActions";
 import { Shield } from "lucide-react";
@@ -92,18 +93,23 @@ export default async function AdminPage() {
               return (
                 <div key={worker.id} className="rounded-xl border border-gray-200 bg-white p-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex-1">
+                    <div className="flex flex-1 gap-4">
+                      <CategoryThumbnail category={worker.category} className="hidden h-16 w-16 shrink-0 sm:block" compact />
                       <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{worker.title}</h3>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
-                          {statusInfo?.label}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
-                        <span>카테고리: {getCategoryLabel(worker.category)}</span>
-                        <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
-                        <span>제출: {formatDate(worker.updatedAt)}</span>
+                        <div className="w-full">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <h3 className="font-semibold text-gray-900">{worker.title}</h3>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
+                              {statusInfo?.label}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                            <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                            <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
+                            <span>제출: {formatDate(worker.updatedAt)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="self-start lg:self-auto">
@@ -149,18 +155,23 @@ export default async function AdminPage() {
               return (
                 <div key={worker.id} className="rounded-xl border border-green-200 bg-white p-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex-1">
+                    <div className="flex flex-1 gap-4">
+                      <CategoryThumbnail category={worker.category} className="hidden h-16 w-16 shrink-0 sm:block" compact />
                       <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{worker.title}</h3>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
-                          {statusInfo?.label}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
-                        <span>카테고리: {getCategoryLabel(worker.category)}</span>
-                        <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
-                        <span>승인: {formatDate(worker.updatedAt)}</span>
+                        <div className="w-full">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
+                            <h3 className="font-semibold text-gray-900">{worker.title}</h3>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
+                              {statusInfo?.label}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
+                            <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                            <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
+                            <span>승인: {formatDate(worker.updatedAt)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="self-start lg:self-auto">
