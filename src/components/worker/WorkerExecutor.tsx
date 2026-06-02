@@ -56,7 +56,7 @@ export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps
   return (
     <div className="space-y-3">
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-200">
+        <label className="worker-executor-label mb-1.5 block text-sm font-medium text-gray-700">
           업무 요청 내용 입력
         </label>
         <Textarea
@@ -68,7 +68,7 @@ export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps
           value={input}
           onChange={(e) => setInput(e.target.value)}
           rows={4}
-          className="bg-white dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="worker-executor-input bg-white"
           disabled={!canUse && !isFree}
         />
       </div>
@@ -92,28 +92,28 @@ export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps
       </Button>
 
       {error && (
-        <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-300">
+        <div className="worker-executor-error rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {error}
         </div>
       )}
 
       {output && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-950/70">
+        <div className="worker-executor-result rounded-xl border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-slate-200">실행 결과</span>
+            <span className="worker-executor-result-title text-sm font-medium text-gray-700">실행 결과</span>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
+              className="worker-executor-copy flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
             >
               {copied ? <CheckCheck className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
               {copied ? "복사됨" : "복사"}
             </button>
           </div>
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-slate-200">
+          <pre className="worker-executor-output whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
             {output}
           </pre>
           {stats && (
-            <div className="mt-3 flex gap-4 border-t border-gray-100 pt-2 text-xs text-gray-400 dark:border-slate-800 dark:text-slate-500">
+            <div className="worker-executor-stats mt-3 flex gap-4 border-t border-gray-100 pt-2 text-xs text-gray-400">
               {stats.tokens && <span>{stats.tokens} 토큰 사용</span>}
               {stats.duration && <span>{(stats.duration / 1000).toFixed(1)}초</span>}
             </div>

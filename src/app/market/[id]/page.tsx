@@ -114,10 +114,10 @@ export default async function WorkerDetailPage({ params }: PageProps) {
           )}
 
           {/* Executor */}
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-5 dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="worker-executor-shell rounded-xl border border-indigo-200 bg-indigo-50 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Play className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-slate-100">
+              <Play className="worker-executor-icon h-5 w-5 text-indigo-600" />
+              <h2 className="worker-executor-heading font-semibold text-gray-900">
                 {canUse ? "AI 직원 실행" : "체험하기"}
               </h2>
             </div>

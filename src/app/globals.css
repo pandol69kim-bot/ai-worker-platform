@@ -3,11 +3,49 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --worker-executor-shell-bg: #eef2ff;
+  --worker-executor-shell-border: #c7d2fe;
+  --worker-executor-icon: #4f46e5;
+  --worker-executor-heading: #111827;
+  --worker-executor-label: #374151;
+  --worker-executor-input-bg: #ffffff;
+  --worker-executor-input-text: #111827;
+  --worker-executor-input-border: #d1d5db;
+  --worker-executor-input-placeholder: #9ca3af;
+  --worker-executor-error-bg: #fef2f2;
+  --worker-executor-error-text: #dc2626;
+  --worker-executor-result-bg: #ffffff;
+  --worker-executor-result-border: #e5e7eb;
+  --worker-executor-result-title: #374151;
+  --worker-executor-result-text: #374151;
+  --worker-executor-copy: #6b7280;
+  --worker-executor-copy-hover: #374151;
+  --worker-executor-stats-border: #f3f4f6;
+  --worker-executor-stats-text: #9ca3af;
 }
 
 :root.dark {
   --background: #0b1220;
   --foreground: #e5eefc;
+  --worker-executor-shell-bg: rgb(15 23 42 / 0.72);
+  --worker-executor-shell-border: #334155;
+  --worker-executor-icon: #818cf8;
+  --worker-executor-heading: #e2e8f0;
+  --worker-executor-label: #e2e8f0;
+  --worker-executor-input-bg: #020617;
+  --worker-executor-input-text: #e2e8f0;
+  --worker-executor-input-border: #334155;
+  --worker-executor-input-placeholder: #64748b;
+  --worker-executor-error-bg: rgb(127 29 29 / 0.28);
+  --worker-executor-error-text: #fca5a5;
+  --worker-executor-result-bg: rgb(2 6 23 / 0.72);
+  --worker-executor-result-border: #334155;
+  --worker-executor-result-title: #e2e8f0;
+  --worker-executor-result-text: #e2e8f0;
+  --worker-executor-copy: #94a3b8;
+  --worker-executor-copy-hover: #e2e8f0;
+  --worker-executor-stats-border: #1e293b;
+  --worker-executor-stats-text: #64748b;
 }
 
 @theme inline {
@@ -81,3 +119,61 @@ html {
 .dark .placeholder\:text-gray-400::placeholder {
   color: #64748b !important;
 }
+
+.worker-executor-shell {
+  background-color: var(--worker-executor-shell-bg) !important;
+  border-color: var(--worker-executor-shell-border) !important;
+}
+
+.worker-executor-icon {
+  color: var(--worker-executor-icon) !important;
+}
+
+.worker-executor-heading,
+.worker-executor-label,
+.worker-executor-result-title,
+.worker-executor-output {
+  color: var(--worker-executor-heading) !important;
+}
+
+.worker-executor-input {
+  background-color: var(--worker-executor-input-bg) !important;
+  color: var(--worker-executor-input-text) !important;
+  border-color: var(--worker-executor-input-border) !important;
+}
+
+.worker-executor-input::placeholder {
+  color: var(--worker-executor-input-placeholder) !important;
+}
+
+.worker-executor-error {
+  background-color: var(--worker-executor-error-bg) !important;
+  color: var(--worker-executor-error-text) !important;
+}
+
+.worker-executor-result {
+  background-color: var(--worker-executor-result-bg) !important;
+  border-color: var(--worker-executor-result-border) !important;
+}
+
+.worker-executor-result-title {
+  color: var(--worker-executor-result-title) !important;
+}
+
+.worker-executor-output {
+  color: var(--worker-executor-result-text) !important;
+}
+
+.worker-executor-copy {
+  color: var(--worker-executor-copy) !important;
+}
+
+.worker-executor-copy:hover {
+  color: var(--worker-executor-copy-hover) !important;
+}
+
+.worker-executor-stats {
+  border-color: var(--worker-executor-stats-border) !important;
+  color: var(--worker-executor-stats-text) !important;
+}
+
