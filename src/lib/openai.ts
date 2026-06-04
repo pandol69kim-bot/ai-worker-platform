@@ -1,29 +1,7 @@
-import OpenAI from "openai";
+import { executeAIWorkerWithProvider } from "@/lib/ai/execute";
+import { buildWorkerSystemPrompt } from "@/lib/ai/prompt";
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export function buildWorkerSystemPrompt(
-  prompt: string,
-  roleDefinition: string,
-  workflow: string,
-  rules: string | null
-) {
-  return `당신은 AI 직원입니다.
-
-역할: ${roleDefinition}
-
-시스템 프롬프트:
-${prompt}
-
-업무 플로우:
-${workflow}
-
-${rules ? `규칙:\n${rules}` : ""}
-
-사용자의 요청에 따라 위 역할과 플로우에 맞게 업무를 수행하세요.`;
-}
+export { buildWorkerSystemPrompt };
 
 export async function executeAIWorker(
   prompt: string,
@@ -31,20 +9,14 @@ export async function executeAIWorker(
   workflow: string,
   rules: string | null,
   userInput: string
-): Promise<{ output: string; tokens: number; systemPrompt: string }> {
-  const systemPrompt = buildWorkerSystemPrompt(prompt, roleDefinition, workflow, rules);
-
-  const completion = await openai.chat.completions.create({
+) {
+  return executeAIWorkerWithProvider({
+    provider: "openai",
     model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userInput },
-    ],
-    max_tokens: 2000,
+    prompt,
+    roleDefinition,
+    workflow,
+    rules,
+    userInput,
   });
-
-  const output = completion.choices[0]?.message?.content || "";
-  const tokens = completion.usage?.total_tokens || 0;
-
-  return { output, tokens, systemPrompt };
 }

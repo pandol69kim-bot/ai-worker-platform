@@ -81,6 +81,9 @@ model AIWorker {
   title          String
   description    String
   category       String
+  aiProvider     String    @default("openai")
+  aiModel        String    @default("gpt-4o-mini")
+  isAiConfigPublic Boolean @default(false)
   roleDefinition String
   workflow       String
   prompt         String
@@ -158,6 +161,8 @@ model Execution {
   id        String   @id @default(cuid())
   workerId  String
   userId    String?
+  provider  String?
+  model     String?
   input     String
   output    String?
   status    String   @default("pending")
@@ -179,4 +184,13 @@ model Payout {
   updatedAt DateTime @updatedAt
 
   maker User @relation(fields: [makerId], references: [id])
+}
+
+model AIProviderKey {
+  id        String   @id @default(cuid())
+  provider  String   @unique
+  apiKey    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

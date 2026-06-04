@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, HelpCircle } from "lucide-react";
+import {
+  AI_PROVIDER_OPTIONS,
+  DEFAULT_AI_MODEL_BY_PROVIDER,
+  getAIModelsForProvider,
+  type AIProvider,
+} from "@/lib/ai/catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +25,8 @@ interface WorkerFormProps {
     title: string;
     description: string;
     category: string;
+    aiProvider: string;
+    aiModel: string;
     roleDefinition: string;
     workflow: string;
     prompt: string;
@@ -42,6 +50,8 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
     title: initialData?.title ?? "",
     description: initialData?.description ?? "",
     category: initialData?.category ?? "",
+    aiProvider: (initialData?.aiProvider as AIProvider | undefined) ?? "openai",
+    aiModel: initialData?.aiModel ?? DEFAULT_AI_MODEL_BY_PROVIDER["openai"],
     roleDefinition: initialData?.roleDefinition ?? "",
     workflow: initialData?.workflow ?? "",
     prompt: initialData?.prompt ?? "",
@@ -69,6 +79,15 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
 
     setUseCustomCategory(false);
     handleChange("category", value);
+  }
+
+  function handleProviderChange(value: string) {
+    const provider = value as AIProvider;
+    setForm((prev) => ({
+      ...prev,
+      aiProvider: provider,
+      aiModel: DEFAULT_AI_MODEL_BY_PROVIDER[provider as AIProvider],
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -139,7 +158,7 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="category">카테고리 *</Label>
             <Select
@@ -186,6 +205,40 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
                 <SelectItem value="free">무료</SelectItem>
                 <SelectItem value="one_time">1회 구매</SelectItem>
                 <SelectItem value="subscription">월 구독</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="aiProvider">AI 제공자 *</Label>
+            <Select value={form.aiProvider} onValueChange={handleProviderChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AI_PROVIDER_OPTIONS.map((provider) => (
+                  <SelectItem key={provider.value} value={provider.value}>
+                    {provider.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="aiModel">모델 *</Label>
+            <Select value={form.aiModel} onValueChange={(value) => handleChange("aiModel", value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getAIModelsForProvider(form.aiProvider as AIProvider).map((model) => (
+                  <SelectItem key={model.value} value={model.value}>
+                    {model.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

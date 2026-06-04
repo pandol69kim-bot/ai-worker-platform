@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { AdminAiConfigVisibilityToggle } from "@/components/worker/AdminAiConfigVisibilityToggle";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getAIModelLabel, getAIProviderLabel } from "@/lib/ai/catalog";
 import { type AdminTargetStatus } from "@/lib/admin-worker-status";
 import { formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 
@@ -21,6 +23,9 @@ type PublishedWorker = {
   title: string;
   description: string;
   category: string;
+  aiProvider: string;
+  aiModel: string;
+  isAiConfigPublic: boolean;
   status: string;
   totalSales: number;
   publishedAt: Date | string | null;
@@ -240,9 +245,13 @@ export function PublishedWorkersManager({ workers }: PublishedWorkersManagerProp
                       <p className="mb-2 text-sm text-gray-500 line-clamp-2">{worker.description}</p>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                         <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                        <span>AI: {getAIProviderLabel(worker.aiProvider)} · {getAIModelLabel(worker.aiProvider, worker.aiModel)}</span>
                         <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                         <span>게시: {formatDate(worker.publishedAt ?? worker.updatedAt)}</span>
                         <span>도입: {worker.totalSales}건</span>
+                      </div>
+                      <div className="mt-3">
+                        <AdminAiConfigVisibilityToggle workerId={worker.id} isAiConfigPublic={worker.isAiConfigPublic} />
                       </div>
                     </div>
                   </div>

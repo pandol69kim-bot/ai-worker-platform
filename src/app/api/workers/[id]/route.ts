@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  AI_PROVIDER_OPTIONS,
+  DEFAULT_AI_MODEL_BY_PROVIDER,
+  isSupportedAIModel,
+} from "@/lib/ai/catalog";
 import { normalizeCategoryInput } from "@/lib/utils";
 import { z } from "zod";
 
@@ -12,10 +17,14 @@ const categorySchema = z
   .transform((value) => normalizeCategoryInput(value))
   .refine((value) => value.length > 0, "카테고리를 입력해 주세요.");
 
+const aiProviderSchema = z.enum(AI_PROVIDER_OPTIONS.map((provider) => provider.value) as [typeof AI_PROVIDER_OPTIONS[number]["value"], ...typeof AI_PROVIDER_OPTIONS[number]["value"][]]);
+
 const updateWorkerSchema = z.object({
   title: z.string().min(2).max(100).optional(),
   description: z.string().min(10).max(2000).optional(),
   category: categorySchema.optional(),
+  aiProvider: aiProviderSchema.optional(),
+  aiModel: z.string().min(1).max(100).optional(),
   roleDefinition: z.string().min(10).optional(),
   workflow: z.string().min(10).optional(),
   prompt: z.string().min(10).optional(),
@@ -80,10 +89,20 @@ export async function PATCH(
   try {
     const body = await req.json();
     const data = updateWorkerSchema.parse(body);
+    const nextProvider = data.aiProvider ?? worker.aiProvider;
+    const nextModel = data.aiModel ?? DEFAULT_AI_MODEL_BY_PROVIDER[nextProvider as keyof typeof DEFAULT_AI_MODEL_BY_PROVIDER] ?? worker.aiModel;
+
+    if (!isSupportedAIModel(nextProvider, nextModel)) {
+      return NextResponse.json({ error: "선택한 AI 제공자에서 지원하지 않는 모델입니다." }, { status: 400 });
+    }
 
     const updated = await db.aIWorker.update({
       where: { id },
-      data,
+      data: {
+        ...data,
+        aiProvider: nextProvider,
+        aiModel: nextModel,
+      },
     });
 
     return NextResponse.json(updated);

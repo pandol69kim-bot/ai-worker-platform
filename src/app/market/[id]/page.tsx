@@ -3,6 +3,11 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Star, Users, Play, ArrowLeft, CheckCircle } from "lucide-react";
+import {
+  canViewAiConfig,
+  getAIModelLabel,
+  getAIProviderLabel,
+} from "@/lib/ai/catalog";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +68,11 @@ export default async function WorkerDetailPage({ params }: PageProps) {
   const isMaker = user?.id === worker.maker.id;
   const canUse = isFree || hasPurchased || isMaker;
   const isMakerRejectedPreview = isMaker && worker.status === "rejected";
+  const showAiConfig = canViewAiConfig({
+    userRole: user?.role,
+    isMaker,
+    isAiConfigPublic: worker.isAiConfigPublic,
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -81,6 +91,8 @@ export default async function WorkerDetailPage({ params }: PageProps) {
                 <h1 className="text-2xl font-bold text-gray-900">{worker.title}</h1>
                 <div className="flex items-center gap-3 mt-1">
                   <Badge variant="secondary">{getCategoryLabel(worker.category)}</Badge>
+                  {showAiConfig && <Badge variant="info">{getAIProviderLabel(worker.aiProvider)}</Badge>}
+                  {showAiConfig && <Badge variant="outline">{getAIModelLabel(worker.aiProvider, worker.aiModel)}</Badge>}
                   <div className="flex items-center gap-1 text-sm text-gray-500">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     {worker.avgRating.toFixed(1)} ({worker.reviewCount}개 리뷰)
@@ -209,6 +221,18 @@ export default async function WorkerDetailPage({ params }: PageProps) {
                 <span className="text-gray-500">등록일</span>
                 <span>{formatDate(worker.publishedAt ?? worker.createdAt)}</span>
               </div>
+              {showAiConfig && (
+                <>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">AI 제공자</span>
+                    <span className="text-right">{getAIProviderLabel(worker.aiProvider)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-gray-500">AI 모델</span>
+                    <span className="text-right">{getAIModelLabel(worker.aiProvider, worker.aiModel)}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

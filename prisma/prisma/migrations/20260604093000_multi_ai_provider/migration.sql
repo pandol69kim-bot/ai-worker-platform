@@ -1,0 +1,8 @@
+ALTER TABLE "AIWorker"
+ADD COLUMN "aiProvider" TEXT NOT NULL DEFAULT 'openai',
+ADD COLUMN "aiModel" TEXT NOT NULL DEFAULT 'gpt-4o-mini',
+ADD COLUMN "isAiConfigPublic" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Execution"
+ADD COLUMN "provider" TEXT,
+ADD COLUMN "model" TEXT;

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  AI_PROVIDER_OPTIONS,
+  DEFAULT_AI_MODEL_BY_PROVIDER,
+  DEFAULT_AI_PROVIDER,
+  isSupportedAIModel,
+} from "@/lib/ai/catalog";
 import { getCategoryMatchValues, normalizeCategoryInput } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -13,10 +19,14 @@ const categorySchema = z
   .transform((value) => normalizeCategoryInput(value))
   .refine((value) => value.length > 0, "카테고리를 입력해 주세요.");
 
+const aiProviderSchema = z.enum(AI_PROVIDER_OPTIONS.map((provider) => provider.value) as [typeof AI_PROVIDER_OPTIONS[number]["value"], ...typeof AI_PROVIDER_OPTIONS[number]["value"][]]);
+
 const createWorkerSchema = z.object({
   title: z.string().min(2).max(100),
   description: z.string().min(10).max(2000),
   category: categorySchema,
+  aiProvider: aiProviderSchema.default(DEFAULT_AI_PROVIDER),
+  aiModel: z.string().min(1).max(100).optional(),
   roleDefinition: z.string().min(10),
   workflow: z.string().min(10),
   prompt: z.string().min(10),
@@ -25,6 +35,17 @@ const createWorkerSchema = z.object({
   price: z.number().min(0).default(0),
   priceType: z.enum(["free", "one_time", "subscription"]).default("free"),
   tags: z.string().optional(),
+}).transform((data) => {
+  const aiModel = data.aiModel ?? DEFAULT_AI_MODEL_BY_PROVIDER[data.aiProvider];
+  return { ...data, aiModel };
+}).superRefine((data, ctx) => {
+  if (!isSupportedAIModel(data.aiProvider, data.aiModel)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "선택한 AI 제공자에서 지원하지 않는 모델입니다.",
+      path: ["aiModel"],
+    });
+  }
 });
 
 export async function GET(req: NextRequest) {

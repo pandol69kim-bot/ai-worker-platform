@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { executeAIWorker } from "@/lib/openai";
+import { executeAIWorker } from "@/lib/ai/execute";
 import { z } from "zod";
 
 const executeSchema = z.object({
@@ -82,6 +82,8 @@ export async function POST(req: NextRequest) {
       data: {
         workerId,
         userId: user?.id,
+        provider: worker.aiProvider,
+        model: worker.aiModel,
         input,
         status: "running",
       },
@@ -90,19 +92,21 @@ export async function POST(req: NextRequest) {
     const startTime = Date.now();
 
     try {
-      const { output, tokens, systemPrompt } = await executeAIWorker(
-        worker.prompt,
-        worker.roleDefinition,
-        worker.workflow,
-        worker.rules,
-        input
-      );
+      const { output, tokens, systemPrompt, provider, model } = await executeAIWorker({
+        provider: worker.aiProvider,
+        model: worker.aiModel,
+        prompt: worker.prompt,
+        roleDefinition: worker.roleDefinition,
+        workflow: worker.workflow,
+        rules: worker.rules,
+        userInput: input,
+      });
 
       const duration = Date.now() - startTime;
 
       await db.execution.update({
         where: { id: execution.id },
-        data: { output, tokens, duration, status: "completed" },
+        data: { output, tokens, duration, provider, model, status: "completed" },
       });
 
       const actualPrompt =
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
           ? `[system]\n${systemPrompt}\n\n[user]\n${input}`
           : undefined;
 
-      return NextResponse.json({ output, tokens, duration, executionId: execution.id, actualPrompt });
+      return NextResponse.json({ output, tokens, duration, executionId: execution.id, actualPrompt, provider, model });
     } catch (aiError) {
       await db.execution.update({
         where: { id: execution.id },

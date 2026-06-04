@@ -2,19 +2,28 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AdminAiConfigVisibilityToggle } from "@/components/worker/AdminAiConfigVisibilityToggle";
 import { auth } from "@/lib/auth";
+import { getAIModelLabel, getAIProviderLabel } from "@/lib/ai/catalog";
 import { db } from "@/lib/db";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { AdminWorkerActions } from "@/components/worker/AdminWorkerActions";
 import { PublishedWorkersManager } from "@/components/worker/PublishedWorkersManager";
-import { Shield } from "lucide-react";
+import { AdminAiKeyManager } from "@/components/worker/AdminAiKeyManager";
+import { Shield, KeyRound } from "lucide-react";
 
 export default async function AdminPage() {
   const session = await auth();
   const user = session?.user as { role?: string } | undefined;
 
   if (user?.role !== "admin") redirect("/");
+
+  const envKeyStatus = {
+    openai: !!process.env.OPENAI_API_KEY,
+    gemini: !!process.env.GEMINI_API_KEY,
+    claude: !!process.env.ANTHROPIC_API_KEY,
+  };
 
   const [reviewQueue, approvedWorkers, publishedWorkers, rejectedWorkers, reviewing] = await Promise.all([
     db.aIWorker.findMany({
@@ -120,8 +129,12 @@ export default async function AdminPage() {
                           <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                             <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                            <span>AI: {getAIProviderLabel(worker.aiProvider)} · {getAIModelLabel(worker.aiProvider, worker.aiModel)}</span>
                             <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                             <span>제출: {formatDate(worker.updatedAt)}</span>
+                          </div>
+                          <div className="mt-3">
+                            <AdminAiConfigVisibilityToggle workerId={worker.id} isAiConfigPublic={worker.isAiConfigPublic} />
                           </div>
                         </div>
                       </div>
@@ -182,8 +195,12 @@ export default async function AdminPage() {
                           <p className="text-sm text-gray-500 mb-2 line-clamp-2">{worker.description}</p>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                             <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                            <span>AI: {getAIProviderLabel(worker.aiProvider)} · {getAIModelLabel(worker.aiProvider, worker.aiModel)}</span>
                             <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                             <span>승인: {formatDate(worker.updatedAt)}</span>
+                          </div>
+                          <div className="mt-3">
+                            <AdminAiConfigVisibilityToggle workerId={worker.id} isAiConfigPublic={worker.isAiConfigPublic} />
                           </div>
                         </div>
                       </div>
@@ -214,6 +231,14 @@ export default async function AdminPage() {
         </h2>
 
         <PublishedWorkersManager workers={publishedWorkers} />
+      </div>
+
+      <div id="ai-keys" className="mt-10 scroll-mt-24">
+        <div className="mb-4 flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-indigo-600" />
+          <h2 className="font-semibold text-gray-900 text-lg">AI API 키 관리</h2>
+        </div>
+        <AdminAiKeyManager envKeyStatus={envKeyStatus} />
       </div>
 
       <div id="rejected-workers" className="mt-10 scroll-mt-24">
@@ -250,8 +275,12 @@ export default async function AdminPage() {
                         <p className="mb-2 line-clamp-2 text-sm text-gray-500">{worker.description}</p>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
                           <span>카테고리: {getCategoryLabel(worker.category)}</span>
+                          <span>AI: {getAIProviderLabel(worker.aiProvider)} · {getAIModelLabel(worker.aiProvider, worker.aiModel)}</span>
                           <span>메이커: {worker.maker.name} ({worker.maker.email})</span>
                           <span>반려: {formatDate(worker.updatedAt)}</span>
+                        </div>
+                        <div className="mt-3">
+                          <AdminAiConfigVisibilityToggle workerId={worker.id} isAiConfigPublic={worker.isAiConfigPublic} />
                         </div>
                       </div>
                     </div>
