@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   BotMessageSquare,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Loader2,
   Search,
   Users,
@@ -74,9 +76,15 @@ export function AdminUserManager() {
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  // 역할 필터 → AI 직원 섹션
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [workerLoading, setWorkerLoading] = useState(false);
   const [workerStatusFilter, setWorkerStatusFilter] = useState("all");
+
+  // 회원 클릭 → 소속 AI 직원 펼침
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [userWorkersCache, setUserWorkersCache] = useState<Record<string, WorkerRow[]>>({});
+  const [userWorkersLoading, setUserWorkersLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -113,6 +121,23 @@ export function AdminUserManager() {
     setRoleFilter(value);
     setPage(1);
     setWorkerStatusFilter("all");
+  }
+
+  async function handleUserClick(userId: string, workerCount: number) {
+    if (workerCount === 0) return;
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      return;
+    }
+    setExpandedUserId(userId);
+    if (userWorkersCache[userId]) return;
+    setUserWorkersLoading(userId);
+    const res = await fetch(`/api/admin/workers?makerId=${userId}&status=all`);
+    if (res.ok) {
+      const data = await res.json();
+      setUserWorkersCache((prev) => ({ ...prev, [userId]: data }));
+    }
+    setUserWorkersLoading(null);
   }
 
   async function handleRoleChange(userId: string, newRole: string) {
@@ -194,42 +219,83 @@ export function AdminUserManager() {
             <div className="space-y-2 sm:hidden">
               {userData.users.map((u) => {
                 const roleInfo = ROLE_LABELS[u.role] ?? ROLE_LABELS.user;
+                const isExpanded = expandedUserId === u.id;
+                const isLoadingWorkers = userWorkersLoading === u.id;
+                const userWorkers = userWorkersCache[u.id] ?? [];
+                const hasWorkers = u._count.aiWorkers > 0;
+
                 return (
-                  <div key={u.id} className="rounded-xl border border-gray-200 bg-white p-3">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      {u.image ? (
-                        <img src={u.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                      ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
-                          {(u.name ?? u.email)[0].toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium text-sm text-gray-900">{u.name ?? "—"}</div>
-                        <div className="truncate text-xs text-gray-400">{u.email}</div>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
-                        {roleInfo.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={u.role}
-                        onValueChange={(v) => handleRoleChange(u.id, v)}
-                        disabled={updatingId === u.id}
+                  <div key={u.id} className={`rounded-xl border bg-white ${isExpanded ? "border-indigo-200" : "border-gray-200"}`}>
+                    <div className="p-3">
+                      <button
+                        type="button"
+                        className={`flex w-full items-center gap-2.5 text-left ${hasWorkers ? "cursor-pointer" : ""}`}
+                        onClick={() => handleUserClick(u.id, u._count.aiWorkers)}
                       >
-                        <SelectTrigger className="h-7 flex-1 text-xs">
-                          {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">일반 사용자</SelectItem>
-                          <SelectItem value="maker">메이커</SelectItem>
-                          <SelectItem value="admin">관리자</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <span className="text-xs text-gray-400">AI {u._count.aiWorkers}개</span>
-                      <span className="text-xs text-gray-400">구매 {u._count.purchases}건</span>
+                        {u.image ? (
+                          <img src={u.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
+                            {(u.name ?? u.email)[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium text-sm text-gray-900">{u.name ?? "—"}</div>
+                          <div className="truncate text-xs text-gray-400">{u.email}</div>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
+                          {roleInfo.label}
+                        </span>
+                        {hasWorkers && (
+                          isExpanded
+                            ? <ChevronUp className="h-4 w-4 shrink-0 text-indigo-400" />
+                            : <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+                        )}
+                      </button>
+                      <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)} disabled={updatingId === u.id}>
+                          <SelectTrigger className="h-7 flex-1 text-xs">
+                            {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">일반 사용자</SelectItem>
+                            <SelectItem value="maker">메이커</SelectItem>
+                            <SelectItem value="admin">관리자</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <span className={`text-xs ${hasWorkers ? "font-medium text-indigo-600" : "text-gray-400"}`}>
+                          AI {u._count.aiWorkers}개
+                        </span>
+                        <span className="text-xs text-gray-400">구매 {u._count.purchases}건</span>
+                      </div>
                     </div>
+
+                    {/* 펼침: 소속 AI 직원 */}
+                    {isExpanded && (
+                      <div className="border-t border-indigo-100 bg-indigo-50/40 px-3 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/30">
+                        {isLoadingWorkers ? (
+                          <div className="flex justify-center py-3">
+                            <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+                          </div>
+                        ) : userWorkers.length === 0 ? (
+                          <p className="text-xs text-gray-400 text-center py-2">AI 직원이 없습니다.</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {userWorkers.map((w) => {
+                              const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
+                              return (
+                                <div key={w.id} className="flex items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-white px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+                                  <span className="truncate font-medium text-gray-800 dark:text-slate-200">{w.title}</span>
+                                  <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
+                                    {statusInfo?.label ?? w.status}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -245,55 +311,103 @@ export function AdminUserManager() {
                     <th className="hidden px-4 py-3 font-medium sm:table-cell">AI 직원</th>
                     <th className="hidden px-4 py-3 font-medium md:table-cell">구매</th>
                     <th className="hidden px-4 py-3 font-medium lg:table-cell">가입일</th>
+                    <th className="w-8 px-2 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {userData.users.map((u) => {
                     const roleInfo = ROLE_LABELS[u.role] ?? ROLE_LABELS.user;
+                    const isExpanded = expandedUserId === u.id;
+                    const isLoadingWorkers = userWorkersLoading === u.id;
+                    const userWorkers = userWorkersCache[u.id] ?? [];
+                    const hasWorkers = u._count.aiWorkers > 0;
+
                     return (
-                      <tr key={u.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            {u.image ? (
-                              <img src={u.image} alt="" className="h-8 w-8 rounded-full object-cover" />
-                            ) : (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
-                                {(u.name ?? u.email)[0].toUpperCase()}
+                      <>
+                        <tr
+                          key={u.id}
+                          className={`${hasWorkers ? "cursor-pointer" : ""} ${isExpanded ? "bg-indigo-50/40" : "hover:bg-gray-50"}`}
+                          onClick={() => handleUserClick(u.id, u._count.aiWorkers)}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              {u.image ? (
+                                <img src={u.image} alt="" className="h-8 w-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
+                                  {(u.name ?? u.email)[0].toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-medium text-gray-900">{u.name ?? "—"}</div>
+                                <div className="truncate text-xs text-gray-400 max-w-45">{u.email}</div>
                               </div>
-                            )}
-                            <div className="min-w-0">
-                              <div className="font-medium text-gray-900">{u.name ?? "—"}</div>
-                              <div className="truncate text-xs text-gray-400 max-w-45">{u.email}</div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
-                              {roleInfo.label}
+                          </td>
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2">
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
+                                {roleInfo.label}
+                              </span>
+                              <Select value={u.role} onValueChange={(v) => handleRoleChange(u.id, v)} disabled={updatingId === u.id}>
+                                <SelectTrigger className="h-7 w-24 text-xs">
+                                  {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">일반 사용자</SelectItem>
+                                  <SelectItem value="maker">메이커</SelectItem>
+                                  <SelectItem value="admin">관리자</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </td>
+                          <td className="hidden px-4 py-3 sm:table-cell">
+                            <span className={hasWorkers ? "font-medium text-indigo-600" : "text-gray-400"}>
+                              {u._count.aiWorkers}개
                             </span>
-                            <Select
-                              value={u.role}
-                              onValueChange={(v) => handleRoleChange(u.id, v)}
-                              disabled={updatingId === u.id}
-                            >
-                              <SelectTrigger className="h-7 w-24 text-xs">
-                                {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="user">일반 사용자</SelectItem>
-                                <SelectItem value="maker">메이커</SelectItem>
-                                <SelectItem value="admin">관리자</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </td>
-                        <td className="hidden px-4 py-3 text-gray-600 sm:table-cell">{u._count.aiWorkers}개</td>
-                        <td className="hidden px-4 py-3 text-gray-600 md:table-cell">{u._count.purchases}건</td>
-                        <td className="hidden px-4 py-3 text-gray-400 lg:table-cell">
-                          {new Date(u.createdAt).toLocaleDateString("ko-KR")}
-                        </td>
-                      </tr>
+                          </td>
+                          <td className="hidden px-4 py-3 text-gray-600 md:table-cell">{u._count.purchases}건</td>
+                          <td className="hidden px-4 py-3 text-gray-400 lg:table-cell">
+                            {new Date(u.createdAt).toLocaleDateString("ko-KR")}
+                          </td>
+                          <td className="px-2 py-3 text-gray-400">
+                            {isLoadingWorkers ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+                            ) : hasWorkers ? (
+                              isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                            ) : null}
+                          </td>
+                        </tr>
+
+                        {/* 펼침: 소속 AI 직원 */}
+                        {isExpanded && (
+                          <tr key={`${u.id}-workers`}>
+                            <td colSpan={6} className="bg-indigo-50/30 px-4 pb-3 pt-1">
+                              <div className="ml-11 space-y-1.5">
+                                <p className="mb-1.5 text-xs font-medium text-indigo-600">AI 직원 목록</p>
+                                {userWorkers.length === 0 ? (
+                                  <p className="text-xs text-gray-400">AI 직원이 없습니다.</p>
+                                ) : (
+                                  userWorkers.map((w) => {
+                                    const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
+                                    return (
+                                      <div key={w.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-indigo-100 bg-white px-3 py-2 text-xs">
+                                        <span className="font-medium text-gray-800">{w.title}</span>
+                                        <span className={`rounded-full px-1.5 py-0.5 font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
+                                          {statusInfo?.label ?? w.status}
+                                        </span>
+                                        <span className="text-gray-400">{getCategoryLabel(w.category)}</span>
+                                        <span className="text-gray-400">{getAIProviderLabel(w.aiProvider)} · {getAIModelLabel(w.aiProvider, w.aiModel)}</span>
+                                        <span className="ml-auto text-gray-300">{new Date(w.createdAt).toLocaleDateString("ko-KR")}</span>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     );
                   })}
                 </tbody>

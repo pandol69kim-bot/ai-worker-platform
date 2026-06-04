@@ -38,11 +38,16 @@ export function WorkerActions({ worker }: { worker: Worker }) {
 
   return (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
-      {["approved", "published", "rejected"].includes(worker.status) && (
+      {["draft", "submitted", "reviewing", "approved", "published", "rejected"].includes(worker.status) && (
         <Link
           href={`/market/${worker.id}`}
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500"
-          title={worker.status === "published" ? "마켓에서 보기" : worker.status === "rejected" ? "작성자 테스트" : "미리보기 / 실행"}
+          title={
+            worker.status === "published" ? "마켓에서 보기" :
+            worker.status === "draft" ? "초안 테스트" :
+            worker.status === "rejected" ? "작성자 테스트" :
+            "미리보기 / 실행"
+          }
         >
           <Eye className="h-4 w-4" />
         </Link>

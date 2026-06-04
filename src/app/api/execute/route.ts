@@ -48,11 +48,11 @@ export async function POST(req: NextRequest) {
     const isAdmin = user?.role === "admin";
     const isMaker = worker.makerId === user?.id;
     const isPublished = worker.status === "published";
-    const isMakerRejectedWorker = isMaker && worker.status === "rejected";
+    const isMakerOwnWorker = isMaker && ["draft", "submitted", "reviewing", "approved", "rejected"].includes(worker.status);
 
-    if (!isAdmin && !isPublished && !isMakerRejectedWorker) {
+    if (!isAdmin && !isPublished && !isMakerOwnWorker) {
       return NextResponse.json(
-        { error: "게시된 AI 직원 또는 작성자 본인의 반려 AI 직원만 실행할 수 있습니다." },
+        { error: "게시된 AI 직원 또는 작성자 본인의 AI 직원만 실행할 수 있습니다." },
         { status: 403 }
       );
     }

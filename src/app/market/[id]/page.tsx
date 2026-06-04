@@ -35,8 +35,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
           id,
           OR: [
             { status: "published" },
-            { makerId: user.id, status: "approved" },
-            { makerId: user.id, status: "rejected" },
+            { makerId: user.id },
           ],
         }
       : { id, status: "published" },
@@ -67,7 +66,8 @@ export default async function WorkerDetailPage({ params }: PageProps) {
 
   const isFree = worker.priceType === "free" || worker.price === 0;
   const isMaker = user?.id === worker.maker.id;
-  const canUse = isFree || hasPurchased || isMaker;
+  const canUse = isFree || hasPurchased || isMaker || isAdmin;
+  const isMakerOwnPreview = isMaker && worker.status !== "published";
   const isMakerRejectedPreview = isMaker && worker.status === "rejected";
   const showAiConfig = canViewAiConfig({
     userRole: user?.role,
@@ -82,13 +82,26 @@ export default async function WorkerDetailPage({ params }: PageProps) {
         마켓으로 돌아가기
       </Link>
 
-      {isAdmin && worker.status !== "published" && (
-        <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-2.5 text-sm text-yellow-800">
-          <span className="font-medium">관리자 미리보기</span>
+      {worker.status !== "published" && (isAdmin || isMakerOwnPreview) && (
+        <div className={`mb-4 rounded-lg border px-4 py-2.5 text-sm ${
+          isAdmin && !isMaker
+            ? "bg-yellow-50 border-yellow-200 text-yellow-800"
+            : worker.status === "draft"
+            ? "bg-sky-50 border-sky-200 text-sky-800"
+            : worker.status === "rejected"
+            ? "bg-red-50 border-red-200 text-red-800"
+            : "bg-indigo-50 border-indigo-200 text-indigo-800"
+        }`}>
+          <span className="font-medium">
+            {isAdmin && !isMaker ? "관리자 미리보기" : "작성자 테스트 모드"}
+          </span>
           {" · "}현재 상태:{" "}
           <span className="font-medium">
             {WORKER_STATUSES[worker.status as keyof typeof WORKER_STATUSES]?.label ?? worker.status}
           </span>
+          {worker.status === "draft" && isMaker && (
+            <span className="ml-2 text-sky-600">저장된 초안을 테스트할 수 있습니다.</span>
+          )}
         </div>
       )}
 
@@ -145,9 +158,19 @@ export default async function WorkerDetailPage({ params }: PageProps) {
                 {canUse ? "AI 직원 실행" : "체험하기"}
               </h2>
             </div>
-            {isMakerRejectedPreview && (
-              <div className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                반려된 AI 직원의 작성자 전용 테스트 화면입니다. 수정 저장 후 재검수 전에 직접 실행해 볼 수 있습니다.
+            {isMakerOwnPreview && (
+              <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${
+                worker.status === "draft"
+                  ? "bg-sky-50 text-sky-700"
+                  : worker.status === "rejected"
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-indigo-50 text-indigo-700"
+              }`}>
+                {worker.status === "draft" && "초안 상태입니다. 제출 전에 작성자 전용으로 테스트할 수 있습니다."}
+                {worker.status === "submitted" && "검수 대기 중입니다. 작성자 전용으로 테스트할 수 있습니다."}
+                {worker.status === "reviewing" && "검토 중입니다. 작성자 전용으로 테스트할 수 있습니다."}
+                {worker.status === "approved" && "승인된 AI 직원입니다. 게시 전 작성자 전용으로 테스트할 수 있습니다."}
+                {worker.status === "rejected" && "반려된 AI 직원입니다. 수정 저장 후 재검수 전에 직접 실행해 볼 수 있습니다."}
               </div>
             )}
             <WorkerExecutor

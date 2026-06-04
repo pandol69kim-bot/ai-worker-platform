@@ -41,9 +41,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "submitted";
   const makerRole = searchParams.get("makerRole")?.trim() ?? "";
+  const makerId = searchParams.get("makerId")?.trim() ?? "";
 
   const where: Record<string, unknown> = status === "all" ? {} : { status };
-  if (makerRole) {
+  if (makerId) {
+    where.makerId = makerId;
+  } else if (makerRole) {
     where.maker = { role: makerRole };
   }
 
