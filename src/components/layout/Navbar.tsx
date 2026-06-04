@@ -70,7 +70,7 @@ export function Navbar() {
                     variant="outline"
                     size="sm"
                     className="gap-1.5"
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={() => signOut({ callbackUrl: window.location.origin })}
                   >
                     <LogOut className="h-4 w-4" />
                     로그아웃
@@ -123,7 +123,7 @@ export function Navbar() {
               )}
               <button
                 className="flex w-full items-center gap-2 py-2 text-sm text-red-600"
-                onClick={() => { signOut({ callbackUrl: "/" }); setMobileOpen(false); }}
+                onClick={() => { signOut({ callbackUrl: window.location.origin }); setMobileOpen(false); }}
               >
                 <LogOut className="h-4 w-4" /> 로그아웃
               </button>
