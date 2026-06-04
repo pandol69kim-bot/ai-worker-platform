@@ -1,9 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { Play, Loader2, Copy, CheckCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Loader2, Copy, CheckCheck, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+type ExecuteError = { summary: string; detail: string };
+
+function parseExecuteError(raw: string): ExecuteError {
+  const lower = raw.toLowerCase();
+
+  if (lower.includes("invalid x-api-key") || lower.includes("authentication_error") || lower.includes("invalid api key") || lower.includes("incorrect api key")) {
+    return { summary: "AI API 키가 유효하지 않습니다.", detail: raw };
+  }
+  if (lower.includes("insufficient_quota") || lower.includes("exceeded your current quota") || lower.includes("billing")) {
+    return { summary: "API 크레딧이 부족합니다.", detail: raw };
+  }
+  if (lower.includes("rate_limit") || lower.includes("rate limit") || lower.includes("too many requests")) {
+    return { summary: "API 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.", detail: raw };
+  }
+  if (lower.includes("context_length") || lower.includes("maximum context") || lower.includes("too long")) {
+    return { summary: "입력 내용이 너무 깁니다.", detail: raw };
+  }
+  if (lower.includes("model_not_found") || lower.includes("does not exist")) {
+    return { summary: "선택한 AI 모델을 찾을 수 없습니다.", detail: raw };
+  }
+  if (lower.includes("timeout") || lower.includes("timed out")) {
+    return { summary: "AI 응답 시간이 초과되었습니다. 다시 시도해 주세요.", detail: raw };
+  }
+  if (lower.includes("api 키") || lower.includes("api key")) {
+    return { summary: "API 키가 설정되지 않았습니다.", detail: raw };
+  }
+
+  return { summary: "AI 실행 중 오류가 발생했습니다.", detail: raw };
+}
 
 interface WorkerExecutorProps {
   workerId: string;
@@ -16,7 +46,8 @@ export function WorkerExecutor({ workerId, canUse, isFree, canInspectPrompt = fa
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<ExecuteError | null>(null);
+  const [showErrorDetail, setShowErrorDetail] = useState(false);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<{ tokens?: number; duration?: number } | null>(null);
   const [actualPrompt, setActualPrompt] = useState("");
@@ -24,7 +55,8 @@ export function WorkerExecutor({ workerId, canUse, isFree, canInspectPrompt = fa
 
   async function handleExecute() {
     if (!input.trim()) return;
-    setError("");
+    setError(null);
+    setShowErrorDetail(false);
     setOutput("");
     setStats(null);
     setActualPrompt("");
@@ -41,7 +73,7 @@ export function WorkerExecutor({ workerId, canUse, isFree, canInspectPrompt = fa
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "실행 중 오류가 발생했습니다.");
+        setError(parseExecuteError(data.error ?? "실행 중 오류가 발생했습니다."));
         return;
       }
 
@@ -98,8 +130,28 @@ export function WorkerExecutor({ workerId, canUse, isFree, canInspectPrompt = fa
       </Button>
 
       {error && (
-        <div className="worker-executor-error rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-          {error}
+        <div className="worker-executor-error rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-red-700">{error.summary}</p>
+              <button
+                type="button"
+                onClick={() => setShowErrorDetail((v) => !v)}
+                className="mt-1 flex items-center gap-1 text-xs text-red-400 hover:text-red-600"
+              >
+                {showErrorDetail
+                  ? <><ChevronUp className="h-3 w-3" />오류 상세 숨기기</>
+                  : <><ChevronDown className="h-3 w-3" />오류 상세 보기</>
+                }
+              </button>
+              {showErrorDetail && (
+                <pre className="mt-2 whitespace-pre-wrap break-all rounded bg-red-100 px-2 py-1.5 text-xs text-red-600 leading-relaxed">
+                  {error.detail}
+                </pre>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
