@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -16,31 +17,47 @@ export async function GET(req: NextRequest) {
   const statusFilter = searchParams.get("status")?.trim() ?? "";
   const search = searchParams.get("search")?.trim() ?? "";
 
-  const where: Record<string, unknown> = {};
-  if (statusFilter) where.status = statusFilter;
+  const where: Prisma.ExecutionWhereInput = {};
+
+  if (statusFilter) {
+    where.status = statusFilter;
+  }
+
   if (search) {
+    // user 관계가 없으므로 사용자 검색은 User 테이블에서 ID 먼저 조회
+    const matchedUsers = await db.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true },
+    });
+    const matchedUserIds = matchedUsers.map((u) => u.id);
+
     where.OR = [
-      { worker: { title: { contains: search, mode: "insensitive" as const } } },
-      { user: { email: { contains: search, mode: "insensitive" as const } } },
-      { user: { name: { contains: search, mode: "insensitive" as const } } },
+      { worker: { title: { contains: search, mode: "insensitive" } } },
+      ...(matchedUserIds.length > 0 ? [{ userId: { in: matchedUserIds } }] : []),
     ];
   }
 
-  const executions = await db.execution.findMany({
-    where,
-    take: limit + 1,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    orderBy: { createdAt: "desc" },
-    include: {
-      worker: { select: { id: true, title: true, category: true } },
-    },
-  });
+  const [executions, total] = await Promise.all([
+    db.execution.findMany({
+      where,
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      orderBy: { createdAt: "desc" },
+      include: {
+        worker: { select: { id: true, title: true, category: true } },
+      },
+    }),
+    db.execution.count({ where }),
+  ]);
 
   const hasMore = executions.length > limit;
   const items = hasMore ? executions.slice(0, limit) : executions;
   const nextCursor = hasMore ? items[items.length - 1].id : null;
-
-  const total = await db.execution.count({ where });
 
   return NextResponse.json({ items, nextCursor, total });
 }

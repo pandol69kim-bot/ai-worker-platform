@@ -67,6 +67,7 @@ export function AdminExecutionList() {
 
   const fetchExecutions = useCallback(async () => {
     setLoading(true);
+    setExpandedId(null);
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (statusFilter !== "all") params.set("status", statusFilter);
