@@ -15,6 +15,7 @@ const CUSTOM_CATEGORY_VALUE = "__custom__";
 interface WorkerFormProps {
   initialData?: {
     id: string;
+    status: string;
     title: string;
     description: string;
     category: string;
@@ -104,7 +105,11 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
         return;
       }
 
-      router.push("/studio");
+      if (initialData?.status === "rejected") {
+        router.push(`/market/${initialData.id}`);
+      } else {
+        router.push("/studio");
+      }
       router.refresh();
     } finally {
       setLoading(false);

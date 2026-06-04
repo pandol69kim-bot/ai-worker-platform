@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { AdminWorkerActions } from "@/components/worker/AdminWorkerActions";
+import { PublishedWorkersManager } from "@/components/worker/PublishedWorkersManager";
 import { Shield } from "lucide-react";
 
 export default async function AdminPage() {
@@ -15,7 +16,7 @@ export default async function AdminPage() {
 
   if (user?.role !== "admin") redirect("/");
 
-  const [reviewQueue, approvedWorkers, reviewing, stats] = await Promise.all([
+  const [reviewQueue, approvedWorkers, publishedWorkers, reviewing] = await Promise.all([
     db.aIWorker.findMany({
       where: { status: { in: ["submitted", "reviewing"] } },
       include: { maker: { select: { name: true, email: true } } },
@@ -26,15 +27,13 @@ export default async function AdminPage() {
       include: { maker: { select: { name: true, email: true } } },
       orderBy: { updatedAt: "desc" },
     }),
+    db.aIWorker.findMany({
+      where: { status: "published" },
+      include: { maker: { select: { name: true, email: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
     db.aIWorker.count({ where: { status: "reviewing" } }),
-    Promise.all([
-      db.aIWorker.count({ where: { status: "published" } }),
-      db.user.count(),
-      db.purchase.count({ where: { paymentStatus: "completed" } }),
-    ]),
   ]);
-
-  const [published, userCount, saleCount] = stats;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -65,10 +64,13 @@ export default async function AdminPage() {
           <div className="text-3xl font-bold text-green-600">{approvedWorkers.length}</div>
           <div className="text-sm text-green-700 mt-1">게시 가능</div>
         </Link>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
-          <div className="text-3xl font-bold text-emerald-600">{published}</div>
-          <div className="text-sm text-gray-500 mt-1">게시된 AI 직원</div>
-        </div>
+        <Link
+          href="#published-workers"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center transition-colors hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <div className="text-3xl font-bold text-emerald-600">{publishedWorkers.length}</div>
+          <div className="text-sm text-emerald-700 mt-1">게시된 AI 직원</div>
+        </Link>
       </div>
 
       {/* Review queue */}
@@ -187,6 +189,19 @@ export default async function AdminPage() {
             })}
           </div>
         )}
+      </div>
+
+      <div id="published-workers" className="mt-10 scroll-mt-24">
+        <h2 className="font-semibold text-gray-900 text-lg mb-4">
+          게시된 AI 직원 목록
+          {publishedWorkers.length > 0 && (
+            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              {publishedWorkers.length}
+            </span>
+          )}
+        </h2>
+
+        <PublishedWorkersManager workers={publishedWorkers} />
       </div>
     </div>
   );

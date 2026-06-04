@@ -6,7 +6,7 @@ import { Star, Users, Play, ArrowLeft, CheckCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
+import { formatPrice, formatDate, getCategoryLabel } from "@/lib/utils";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { WorkerExecutor } from "@/components/worker/WorkerExecutor";
 import { PurchaseButton } from "@/components/worker/PurchaseButton";
@@ -27,6 +27,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
           OR: [
             { status: "published" },
             { makerId: user.id, status: "approved" },
+            { makerId: user.id, status: "rejected" },
           ],
         }
       : {
@@ -61,6 +62,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
   const isFree = worker.priceType === "free" || worker.price === 0;
   const isMaker = user?.id === worker.maker.id;
   const canUse = isFree || hasPurchased || isMaker;
+  const isMakerRejectedPreview = isMaker && worker.status === "rejected";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -120,6 +122,11 @@ export default async function WorkerDetailPage({ params }: PageProps) {
                 {canUse ? "AI 직원 실행" : "체험하기"}
               </h2>
             </div>
+            {isMakerRejectedPreview && (
+              <div className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                반려된 AI 직원의 작성자 전용 테스트 화면입니다. 수정 저장 후 재검수 전에 직접 실행해 볼 수 있습니다.
+              </div>
+            )}
             <WorkerExecutor
               workerId={worker.id}
               canUse={canUse}
@@ -170,7 +177,9 @@ export default async function WorkerDetailPage({ params }: PageProps) {
             {isMaker ? (
               <div className="flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700 mb-4">
                 <CheckCircle className="h-4 w-4" />
-                본인이 제작한 AI 직원입니다. 바로 실행할 수 있습니다.
+                {isMakerRejectedPreview
+                  ? "본인이 제작한 반려 AI 직원입니다. 작성자 전용으로 테스트할 수 있습니다."
+                  : "본인이 제작한 AI 직원입니다. 바로 실행할 수 있습니다."}
               </div>
             ) : hasPurchased ? (
               <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 mb-4">

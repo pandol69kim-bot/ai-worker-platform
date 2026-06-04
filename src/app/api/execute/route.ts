@@ -45,7 +45,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "AI 직원을 찾을 수 없습니다." }, { status: 404 });
     }
 
-    if (worker.status !== "published" && worker.priceType !== "free") {
+    const isMaker = worker.makerId === user?.id;
+    const isPublished = worker.status === "published";
+    const isMakerRejectedWorker = isMaker && worker.status === "rejected";
+
+    if (!isPublished && !isMakerRejectedWorker) {
+      return NextResponse.json(
+        { error: "게시된 AI 직원 또는 작성자 본인의 반려 AI 직원만 실행할 수 있습니다." },
+        { status: 403 }
+      );
+    }
+
+    if (!isPublished && !isMaker) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+    }
+
+    if (isPublished && worker.priceType !== "free") {
       if (!user?.id) {
         return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
       }
@@ -58,7 +73,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      if (!purchase && worker.makerId !== user.id) {
+      if (!purchase && !isMaker) {
         return NextResponse.json({ error: "이 AI 직원을 사용하려면 구매가 필요합니다." }, { status: 403 });
       }
     }

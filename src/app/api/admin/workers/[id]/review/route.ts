@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { applyAdminWorkerStatusChange } from "@/lib/admin-worker-status";
 import { z } from "zod";
 
 const reviewSchema = z.object({
@@ -26,11 +26,6 @@ export async function POST(
     const body = await req.json();
     const { action, note, score } = reviewSchema.parse(body);
 
-    const worker = await db.aIWorker.findUnique({ where: { id } });
-    if (!worker) {
-      return NextResponse.json({ error: "AI 직원을 찾을 수 없습니다." }, { status: 404 });
-    }
-
     let newStatus: string;
     switch (action) {
       case "approve":
@@ -44,29 +39,20 @@ export async function POST(
         break;
     }
 
-    await db.adminReview.create({
-      data: {
-        workerId: id,
-        reviewerId: user.id!,
-        score,
-        note,
-        status: newStatus,
-      },
+    const result = await applyAdminWorkerStatusChange({
+      workerIds: [id],
+      reviewerId: user.id!,
+      targetStatus: newStatus as "approved" | "published" | "rejected",
+      note,
+      score,
     });
 
-    const updateData: Record<string, unknown> = {
-      status: newStatus,
-      rejectionNote: action === "reject" ? note : null,
-    };
-
-    if (action === "publish") {
-      updateData.publishedAt = new Date();
+    if (result.updatedCount === 0) {
+      const skipReason = result.skipped[0]?.reason ?? "상태를 변경할 수 없습니다.";
+      return NextResponse.json({ error: skipReason }, { status: 400 });
     }
 
-    const updated = await db.aIWorker.update({
-      where: { id },
-      data: updateData,
-    });
+    const updated = result.updatedWorkers[0];
 
     return NextResponse.json(updated);
   } catch (error) {
