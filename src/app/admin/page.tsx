@@ -12,7 +12,8 @@ import { AdminWorkerActions } from "@/components/worker/AdminWorkerActions";
 import { PublishedWorkersManager } from "@/components/worker/PublishedWorkersManager";
 import { AdminAiKeyManager } from "@/components/worker/AdminAiKeyManager";
 import { AdminUserManager } from "@/components/worker/AdminUserManager";
-import { Shield, KeyRound, Users, ExternalLink } from "lucide-react";
+import { AdminExecutionList } from "@/components/worker/AdminExecutionList";
+import { Shield, KeyRound, Users, ExternalLink, Zap } from "lucide-react";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -26,7 +27,7 @@ export default async function AdminPage() {
     claude: !!process.env.ANTHROPIC_API_KEY,
   };
 
-  const [reviewQueue, approvedWorkers, publishedWorkers, rejectedWorkers, reviewing, totalUsers] = await Promise.all([
+  const [reviewQueue, approvedWorkers, publishedWorkers, rejectedWorkers, reviewing, totalUsers, totalExecutions] = await Promise.all([
     db.aIWorker.findMany({
       where: { status: { in: ["submitted", "reviewing"] } },
       include: { maker: { select: { name: true, email: true } } },
@@ -49,6 +50,7 @@ export default async function AdminPage() {
     }),
     db.aIWorker.count({ where: { status: "reviewing" } }),
     db.user.count(),
+    db.execution.count(),
   ]);
 
   return (
@@ -64,7 +66,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="mb-10 grid grid-cols-2 gap-4 xl:grid-cols-6">
+      <div className="mb-10 grid grid-cols-2 gap-4 xl:grid-cols-7">
         <Link
           href="#users"
           className="rounded-xl border border-violet-200 bg-violet-50 p-5 text-center transition-colors hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -106,6 +108,13 @@ export default async function AdminPage() {
         >
           <div className="text-3xl font-bold text-red-600">{rejectedWorkers.length}</div>
           <div className="text-sm text-red-700 mt-1">반려된 AI 직원</div>
+        </Link>
+        <Link
+          href="#executions"
+          className="rounded-xl border border-orange-200 bg-orange-50 p-5 text-center transition-colors hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <div className="text-3xl font-bold text-orange-600">{totalExecutions.toLocaleString()}</div>
+          <div className="text-sm text-orange-700 mt-1">총 실행</div>
         </Link>
       </div>
 
@@ -265,6 +274,14 @@ export default async function AdminPage() {
           <h2 className="font-semibold text-gray-900 text-lg">회원 관리</h2>
         </div>
         <AdminUserManager />
+      </div>
+
+      <div id="executions" className="mt-10 scroll-mt-24">
+        <div className="mb-4 flex items-center gap-2">
+          <Zap className="h-5 w-5 text-orange-500" />
+          <h2 className="font-semibold text-gray-900 text-lg">AI 직원 실행 목록</h2>
+        </div>
+        <AdminExecutionList />
       </div>
 
       <div id="ai-keys" className="mt-10 scroll-mt-24">
