@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 
 interface PurchaseButtonProps {
@@ -70,7 +71,7 @@ export function PurchaseButton({ workerId, price, isFree, isLoggedIn }: Purchase
         ) : (
           <ShoppingCart className="h-4 w-4" />
         )}
-        {isFree ? "무료로 도입하기" : `₩${price.toLocaleString()} 구매하기`}
+        {isFree ? "무료로 도입하기" : `${formatPrice(price)} 구매하기`}
       </Button>
       {error && (
         <p className="text-xs text-red-500 text-center">{error}</p>
