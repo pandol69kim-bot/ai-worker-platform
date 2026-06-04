@@ -66,7 +66,6 @@ const WORKER_STATUS_FILTER_OPTIONS = [
 ];
 
 export function AdminUserManager() {
-  // ── 회원 목록 state ──
   const [userData, setUserData] = useState<UsersResponse | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -75,12 +74,10 @@ export function AdminUserManager() {
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  // ── AI 직원 목록 state ──
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [workerLoading, setWorkerLoading] = useState(false);
   const [workerStatusFilter, setWorkerStatusFilter] = useState("all");
 
-  // ── 검색 debounce ──
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedSearch(search);
@@ -89,7 +86,6 @@ export function AdminUserManager() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // ── 회원 목록 조회 ──
   const fetchUsers = useCallback(async () => {
     setUserLoading(true);
     const params = new URLSearchParams({ page: String(page) });
@@ -102,7 +98,6 @@ export function AdminUserManager() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  // ── AI 직원 목록 조회 (역할 필터 선택 시만) ──
   const fetchWorkers = useCallback(async () => {
     if (roleFilter === "all") { setWorkers([]); return; }
     setWorkerLoading(true);
@@ -143,8 +138,9 @@ export function AdminUserManager() {
 
   return (
     <div className="space-y-6">
+
       {/* ── 검색 + 역할 필터 ── */}
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
@@ -155,7 +151,7 @@ export function AdminUserManager() {
           />
         </div>
         <Select value={roleFilter} onValueChange={handleRoleFilter}>
-          <SelectTrigger className="w-36">
+          <SelectTrigger className="w-full sm:w-36">
             <SelectValue placeholder="전체 역할" />
           </SelectTrigger>
           <SelectContent>
@@ -193,77 +189,117 @@ export function AdminUserManager() {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-            <table className="admin-table w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs text-gray-500">
-                  <th className="px-4 py-3 font-medium">회원</th>
-                  <th className="px-4 py-3 font-medium">역할</th>
-                  <th className="hidden px-4 py-3 font-medium sm:table-cell">AI 직원</th>
-                  <th className="hidden px-4 py-3 font-medium md:table-cell">구매</th>
-                  <th className="hidden px-4 py-3 font-medium lg:table-cell">가입일</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {userData.users.map((u) => {
-                  const roleInfo = ROLE_LABELS[u.role] ?? ROLE_LABELS.user;
-                  return (
-                    <tr key={u.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {u.image ? (
-                            <img src={u.image} alt="" className="h-8 w-8 rounded-full object-cover" />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
-                              {(u.name ?? u.email)[0].toUpperCase()}
+          <>
+            {/* 모바일 카드 뷰 (< sm) */}
+            <div className="space-y-2 sm:hidden">
+              {userData.users.map((u) => {
+                const roleInfo = ROLE_LABELS[u.role] ?? ROLE_LABELS.user;
+                return (
+                  <div key={u.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      {u.image ? (
+                        <img src={u.image} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
+                          {(u.name ?? u.email)[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium text-sm text-gray-900">{u.name ?? "—"}</div>
+                        <div className="truncate text-xs text-gray-400">{u.email}</div>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
+                        {roleInfo.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={u.role}
+                        onValueChange={(v) => handleRoleChange(u.id, v)}
+                        disabled={updatingId === u.id}
+                      >
+                        <SelectTrigger className="h-7 flex-1 text-xs">
+                          {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">일반 사용자</SelectItem>
+                          <SelectItem value="maker">메이커</SelectItem>
+                          <SelectItem value="admin">관리자</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className="text-xs text-gray-400">AI {u._count.aiWorkers}개</span>
+                      <span className="text-xs text-gray-400">구매 {u._count.purchases}건</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 데스크탑 테이블 뷰 (sm+) */}
+            <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white sm:block">
+              <table className="admin-table w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs text-gray-500">
+                    <th className="px-4 py-3 font-medium">회원</th>
+                    <th className="px-4 py-3 font-medium">역할</th>
+                    <th className="hidden px-4 py-3 font-medium sm:table-cell">AI 직원</th>
+                    <th className="hidden px-4 py-3 font-medium md:table-cell">구매</th>
+                    <th className="hidden px-4 py-3 font-medium lg:table-cell">가입일</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {userData.users.map((u) => {
+                    const roleInfo = ROLE_LABELS[u.role] ?? ROLE_LABELS.user;
+                    return (
+                      <tr key={u.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {u.image ? (
+                              <img src={u.image} alt="" className="h-8 w-8 rounded-full object-cover" />
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-medium text-indigo-600">
+                                {(u.name ?? u.email)[0].toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="font-medium text-gray-900">{u.name ?? "—"}</div>
+                              <div className="truncate text-xs text-gray-400 max-w-45">{u.email}</div>
                             </div>
-                          )}
-                          <div>
-                            <div className="font-medium text-gray-900">{u.name ?? "—"}</div>
-                            <div className="text-xs text-gray-400">{u.email}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
-                            {roleInfo.label}
-                          </span>
-                          <Select
-                            value={u.role}
-                            onValueChange={(v) => handleRoleChange(u.id, v)}
-                            disabled={updatingId === u.id}
-                          >
-                            <SelectTrigger className="h-7 w-24 text-xs">
-                              {updatingId === u.id ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <SelectValue />
-                              )}
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">일반 사용자</SelectItem>
-                              <SelectItem value="maker">메이커</SelectItem>
-                              <SelectItem value="admin">관리자</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </td>
-                      <td className="hidden px-4 py-3 text-gray-600 sm:table-cell">
-                        {u._count.aiWorkers}개
-                      </td>
-                      <td className="hidden px-4 py-3 text-gray-600 md:table-cell">
-                        {u._count.purchases}건
-                      </td>
-                      <td className="hidden px-4 py-3 text-gray-400 lg:table-cell">
-                        {new Date(u.createdAt).toLocaleDateString("ko-KR")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleInfo.color}`}>
+                              {roleInfo.label}
+                            </span>
+                            <Select
+                              value={u.role}
+                              onValueChange={(v) => handleRoleChange(u.id, v)}
+                              disabled={updatingId === u.id}
+                            >
+                              <SelectTrigger className="h-7 w-24 text-xs">
+                                {updatingId === u.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue />}
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">일반 사용자</SelectItem>
+                                <SelectItem value="maker">메이커</SelectItem>
+                                <SelectItem value="admin">관리자</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </td>
+                        <td className="hidden px-4 py-3 text-gray-600 sm:table-cell">{u._count.aiWorkers}개</td>
+                        <td className="hidden px-4 py-3 text-gray-600 md:table-cell">{u._count.purchases}건</td>
+                        <td className="hidden px-4 py-3 text-gray-400 lg:table-cell">
+                          {new Date(u.createdAt).toLocaleDateString("ko-KR")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {totalPages > 1 && (
@@ -284,7 +320,7 @@ export function AdminUserManager() {
       {/* ── AI 직원 목록 (역할 필터 선택 시 표시) ── */}
       {roleFilter !== "all" && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <BotMessageSquare className="h-4 w-4 text-indigo-600" />
               <h3 className="font-medium text-gray-900 text-sm">
@@ -297,7 +333,7 @@ export function AdminUserManager() {
               )}
             </div>
             <Select value={workerStatusFilter} onValueChange={setWorkerStatusFilter}>
-              <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectTrigger className="h-8 w-full text-xs sm:w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -317,48 +353,72 @@ export function AdminUserManager() {
               <p className="text-sm text-gray-400">해당 역할 회원의 AI 직원이 없습니다.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-              <table className="admin-table w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs text-gray-500">
-                    <th className="px-4 py-3 font-medium">AI 직원</th>
-                    <th className="px-4 py-3 font-medium">상태</th>
-                    <th className="hidden px-4 py-3 font-medium sm:table-cell">카테고리</th>
-                    <th className="hidden px-4 py-3 font-medium md:table-cell">AI 모델</th>
-                    <th className="hidden px-4 py-3 font-medium lg:table-cell">메이커</th>
-                    <th className="hidden px-4 py-3 font-medium xl:table-cell">생성일</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {workers.map((w) => {
-                    const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
-                    return (
-                      <tr key={w.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-900">{w.title}</td>
-                        <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
-                            {statusInfo?.label ?? w.status}
-                          </span>
-                        </td>
-                        <td className="hidden px-4 py-3 text-gray-500 sm:table-cell">
-                          {getCategoryLabel(w.category)}
-                        </td>
-                        <td className="hidden px-4 py-3 text-gray-500 md:table-cell">
-                          {getAIProviderLabel(w.aiProvider)} · {getAIModelLabel(w.aiProvider, w.aiModel)}
-                        </td>
-                        <td className="hidden px-4 py-3 lg:table-cell">
-                          <div className="text-gray-800">{w.maker.name ?? "—"}</div>
-                          <div className="text-xs text-gray-400">{w.maker.email}</div>
-                        </td>
-                        <td className="hidden px-4 py-3 text-gray-400 xl:table-cell">
-                          {new Date(w.createdAt).toLocaleDateString("ko-KR")}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* 모바일 카드 뷰 (< sm) */}
+              <div className="space-y-2 sm:hidden">
+                {workers.map((w) => {
+                  const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
+                  return (
+                    <div key={w.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <span className="font-medium text-sm text-gray-900 leading-snug">{w.title}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
+                          {statusInfo?.label ?? w.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        {getCategoryLabel(w.category)} · {getAIProviderLabel(w.aiProvider)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">
+                        {w.maker.name ?? w.maker.email}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 데스크탑 테이블 뷰 (sm+) */}
+              <div className="hidden overflow-hidden rounded-xl border border-gray-200 bg-white sm:block">
+                <table className="admin-table w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs text-gray-500">
+                      <th className="px-4 py-3 font-medium">AI 직원</th>
+                      <th className="px-4 py-3 font-medium">상태</th>
+                      <th className="hidden px-4 py-3 font-medium sm:table-cell">카테고리</th>
+                      <th className="hidden px-4 py-3 font-medium md:table-cell">AI 모델</th>
+                      <th className="hidden px-4 py-3 font-medium lg:table-cell">메이커</th>
+                      <th className="hidden px-4 py-3 font-medium xl:table-cell">생성일</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {workers.map((w) => {
+                      const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
+                      return (
+                        <tr key={w.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium text-gray-900">{w.title}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
+                              {statusInfo?.label ?? w.status}
+                            </span>
+                          </td>
+                          <td className="hidden px-4 py-3 text-gray-500 sm:table-cell">{getCategoryLabel(w.category)}</td>
+                          <td className="hidden px-4 py-3 text-gray-500 md:table-cell">
+                            {getAIProviderLabel(w.aiProvider)} · {getAIModelLabel(w.aiProvider, w.aiModel)}
+                          </td>
+                          <td className="hidden px-4 py-3 lg:table-cell">
+                            <div className="text-gray-800">{w.maker.name ?? "—"}</div>
+                            <div className="text-xs text-gray-400">{w.maker.email}</div>
+                          </td>
+                          <td className="hidden px-4 py-3 text-gray-400 xl:table-cell">
+                            {new Date(w.createdAt).toLocaleDateString("ko-KR")}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
