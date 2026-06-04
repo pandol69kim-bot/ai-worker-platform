@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, XCircle, Globe, Loader2, ChevronDown } from "lucide-react";
+import { CheckCircle, XCircle, Globe, Loader2, ChevronDown, Clock } from "lucide-react";
 
 interface AdminWorkerActionsProps {
   workerId: string;
@@ -15,7 +15,7 @@ export function AdminWorkerActions({ workerId, currentStatus }: AdminWorkerActio
   const [note, setNote] = useState("");
   const [showNote, setShowNote] = useState(false);
 
-  async function handleAction(action: "approve" | "reject" | "publish") {
+  async function handleAction(action: "review" | "approve" | "reject" | "publish") {
     setLoading(action);
     try {
       const res = await fetch(`/api/admin/workers/${workerId}/review`, {
@@ -36,6 +36,27 @@ export function AdminWorkerActions({ workerId, currentStatus }: AdminWorkerActio
     <div className="flex flex-col items-end gap-2 shrink-0">
       <div className="flex items-center gap-2">
         {currentStatus === "submitted" && (
+          <>
+            <button
+              onClick={() => handleAction("review")}
+              disabled={!!loading}
+              className="flex items-center gap-1.5 rounded-lg bg-sky-50 border border-sky-200 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-50"
+            >
+              {loading === "review" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+              검토 중
+            </button>
+            <button
+              onClick={() => handleAction("approve")}
+              disabled={!!loading}
+              className="flex items-center gap-1.5 rounded-lg bg-blue-50 border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            >
+              {loading === "approve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+              승인
+            </button>
+          </>
+        )}
+
+        {currentStatus === "reviewing" && (
           <button
             onClick={() => handleAction("approve")}
             disabled={!!loading}

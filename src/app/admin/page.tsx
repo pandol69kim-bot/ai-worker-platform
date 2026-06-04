@@ -79,10 +79,13 @@ export default async function AdminPage() {
           <div className="text-3xl font-bold text-yellow-600">{reviewQueue.length}</div>
           <div className="text-sm text-yellow-700 mt-1">검수 대기</div>
         </Link>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
-          <div className="text-3xl font-bold text-blue-600">{reviewing}</div>
-          <div className="text-sm text-gray-500 mt-1">검토 중</div>
-        </div>
+        <Link
+          href="#review-queue"
+          className="rounded-xl border border-sky-200 bg-sky-50 p-5 text-center transition-colors hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+        >
+          <div className="text-3xl font-bold text-sky-600">{reviewing}</div>
+          <div className="text-sm text-sky-700 mt-1">검토 중</div>
+        </Link>
         <Link
           href="#publish-ready"
           className="rounded-xl border border-green-200 bg-green-50 p-5 text-center transition-colors hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500"

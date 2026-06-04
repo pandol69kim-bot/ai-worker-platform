@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-export const ADMIN_TARGET_STATUSES = ["approved", "published", "rejected"] as const;
+export const ADMIN_TARGET_STATUSES = ["reviewing", "approved", "published", "rejected"] as const;
 
 export type AdminTargetStatus = (typeof ADMIN_TARGET_STATUSES)[number];
 
@@ -25,11 +25,18 @@ export function canTransitionWorkerStatus(
     return { ok: false, reason: "이미 해당 상태입니다." };
   }
 
-  if (["submitted", "reviewing"].includes(currentStatus)) {
+  if (currentStatus === "submitted") {
+    if (["reviewing", "approved", "rejected"].includes(targetStatus)) {
+      return { ok: true };
+    }
+    return { ok: false, reason: "제출된 AI 직원은 검토 중·승인·반려만 가능합니다." };
+  }
+
+  if (currentStatus === "reviewing") {
     if (["approved", "rejected"].includes(targetStatus)) {
       return { ok: true };
     }
-    return { ok: false, reason: "검수 대기 또는 검토 중 상태에서는 승인 또는 반려만 가능합니다." };
+    return { ok: false, reason: "검토 중 상태에서는 승인 또는 반려만 가능합니다." };
   }
 
   if (currentStatus === "approved") {

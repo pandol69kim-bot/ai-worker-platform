@@ -4,7 +4,7 @@ import { applyAdminWorkerStatusChange } from "@/lib/admin-worker-status";
 import { z } from "zod";
 
 const reviewSchema = z.object({
-  action: z.enum(["approve", "reject", "publish"]),
+  action: z.enum(["review", "approve", "reject", "publish"]),
   note: z.string().optional(),
   score: z.number().min(0).max(10).optional(),
 });
@@ -26,23 +26,17 @@ export async function POST(
     const body = await req.json();
     const { action, note, score } = reviewSchema.parse(body);
 
-    let newStatus: string;
-    switch (action) {
-      case "approve":
-        newStatus = "approved";
-        break;
-      case "reject":
-        newStatus = "rejected";
-        break;
-      case "publish":
-        newStatus = "published";
-        break;
-    }
+    const STATUS_MAP = {
+      review: "reviewing",
+      approve: "approved",
+      reject: "rejected",
+      publish: "published",
+    } as const;
 
     const result = await applyAdminWorkerStatusChange({
       workerIds: [id],
       reviewerId: user.id!,
-      targetStatus: newStatus as "approved" | "published" | "rejected",
+      targetStatus: STATUS_MAP[action],
       note,
       score,
     });
