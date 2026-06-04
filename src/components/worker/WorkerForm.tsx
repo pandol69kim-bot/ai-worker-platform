@@ -117,7 +117,14 @@ export function WorkerForm({ initialData }: WorkerFormProps) {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: { error?: string; id?: string } = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setError(`서버 응답 오류 (${res.status}): ${text.slice(0, 200)}`);
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error ?? "저장에 실패했습니다.");

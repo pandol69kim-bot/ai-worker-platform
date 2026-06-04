@@ -40,11 +40,17 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "submitted";
+  const makerRole = searchParams.get("makerRole")?.trim() ?? "";
+
+  const where: Record<string, unknown> = status === "all" ? {} : { status };
+  if (makerRole) {
+    where.maker = { role: makerRole };
+  }
 
   const workers = await db.aIWorker.findMany({
-    where: status === "all" ? {} : { status },
+    where,
     include: {
-      maker: { select: { id: true, name: true, email: true } },
+      maker: { select: { id: true, name: true, email: true, role: true } },
     },
     orderBy: { updatedAt: "desc" },
   });

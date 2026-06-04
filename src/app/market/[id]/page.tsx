@@ -11,7 +11,7 @@ import {
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice, formatDate, getCategoryLabel } from "@/lib/utils";
+import { formatPrice, formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { CategoryThumbnail } from "@/components/worker/CategoryThumbnail";
 import { WorkerExecutor } from "@/components/worker/WorkerExecutor";
 import { PurchaseButton } from "@/components/worker/PurchaseButton";
@@ -25,8 +25,12 @@ export default async function WorkerDetailPage({ params }: PageProps) {
   const session = await auth();
   const user = session?.user as { id?: string; role?: string } | undefined;
 
+  const isAdmin = user?.role === "admin";
+
   const worker = await db.aIWorker.findFirst({
-    where: user?.id
+    where: isAdmin
+      ? { id }
+      : user?.id
       ? {
           id,
           OR: [
@@ -35,10 +39,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
             { makerId: user.id, status: "rejected" },
           ],
         }
-      : {
-          id,
-          status: "published",
-        },
+      : { id, status: "published" },
     include: {
       maker: {
         select: {
@@ -80,6 +81,16 @@ export default async function WorkerDetailPage({ params }: PageProps) {
         <ArrowLeft className="h-4 w-4" />
         마켓으로 돌아가기
       </Link>
+
+      {isAdmin && worker.status !== "published" && (
+        <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-2.5 text-sm text-yellow-800">
+          <span className="font-medium">관리자 미리보기</span>
+          {" · "}현재 상태:{" "}
+          <span className="font-medium">
+            {WORKER_STATUSES[worker.status as keyof typeof WORKER_STATUSES]?.label ?? worker.status}
+          </span>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main content */}

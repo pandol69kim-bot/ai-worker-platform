@@ -107,14 +107,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
-  }
-
-  const user = session.user as { id: string; role?: string };
-
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+    }
+
+    const user = session.user as { id: string; role?: string };
+
     const currentUser = await db.user.findUnique({
       where: { id: user.id },
       select: { id: true },
@@ -131,11 +131,7 @@ export async function POST(req: NextRequest) {
     const data = createWorkerSchema.parse(body);
 
     const worker = await db.aIWorker.create({
-      data: {
-        ...data,
-        makerId: user.id,
-        status: "draft",
-      },
+      data: { ...data, makerId: user.id, status: "draft" },
     });
 
     return NextResponse.json(worker, { status: 201 });
@@ -143,15 +139,22 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2003"
-    ) {
-      return NextResponse.json(
-        { error: "현재 계정 정보를 찾을 수 없습니다. 다시 로그인한 뒤 시도해 주세요." },
-        { status: 401 }
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error("[POST /api/workers] Prisma error:", error.code, error.message, error.meta);
+      if (error.code === "P2003") {
+        return NextResponse.json(
+          { error: "현재 계정 정보를 찾을 수 없습니다. 다시 로그인한 뒤 시도해 주세요." },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json({ error: `DB 오류 (${error.code}): ${error.message}` }, { status: 500 });
     }
-    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      console.error("[POST /api/workers] Prisma validation error:", error.message);
+      return NextResponse.json({ error: `DB 유효성 오류: ${error.message}` }, { status: 500 });
+    }
+    console.error("[POST /api/workers] Unexpected error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: `서버 오류: ${message}` }, { status: 500 });
   }
 }

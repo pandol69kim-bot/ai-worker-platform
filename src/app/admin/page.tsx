@@ -11,7 +11,8 @@ import { formatDate, getCategoryLabel, WORKER_STATUSES } from "@/lib/utils";
 import { AdminWorkerActions } from "@/components/worker/AdminWorkerActions";
 import { PublishedWorkersManager } from "@/components/worker/PublishedWorkersManager";
 import { AdminAiKeyManager } from "@/components/worker/AdminAiKeyManager";
-import { Shield, KeyRound } from "lucide-react";
+import { AdminUserManager } from "@/components/worker/AdminUserManager";
+import { Shield, KeyRound, Users, ExternalLink } from "lucide-react";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -25,7 +26,7 @@ export default async function AdminPage() {
     claude: !!process.env.ANTHROPIC_API_KEY,
   };
 
-  const [reviewQueue, approvedWorkers, publishedWorkers, rejectedWorkers, reviewing] = await Promise.all([
+  const [reviewQueue, approvedWorkers, publishedWorkers, rejectedWorkers, reviewing, totalUsers] = await Promise.all([
     db.aIWorker.findMany({
       where: { status: { in: ["submitted", "reviewing"] } },
       include: { maker: { select: { name: true, email: true } } },
@@ -47,6 +48,7 @@ export default async function AdminPage() {
       orderBy: { updatedAt: "desc" },
     }),
     db.aIWorker.count({ where: { status: "reviewing" } }),
+    db.user.count(),
   ]);
 
   return (
@@ -62,11 +64,21 @@ export default async function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="mb-10 grid grid-cols-2 gap-4 xl:grid-cols-5">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
+      <div className="mb-10 grid grid-cols-2 gap-4 xl:grid-cols-6">
+        <Link
+          href="#users"
+          className="rounded-xl border border-violet-200 bg-violet-50 p-5 text-center transition-colors hover:bg-violet-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+        >
+          <div className="text-3xl font-bold text-violet-600">{totalUsers}</div>
+          <div className="text-sm text-violet-700 mt-1">전체 회원</div>
+        </Link>
+        <Link
+          href="#review-queue"
+          className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 text-center transition-colors hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+        >
           <div className="text-3xl font-bold text-yellow-600">{reviewQueue.length}</div>
-          <div className="text-sm text-gray-500 mt-1">검수 대기</div>
-        </div>
+          <div className="text-sm text-yellow-700 mt-1">검수 대기</div>
+        </Link>
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-center">
           <div className="text-3xl font-bold text-blue-600">{reviewing}</div>
           <div className="text-sm text-gray-500 mt-1">검토 중</div>
@@ -95,7 +107,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Review queue */}
-      <div>
+      <div id="review-queue" className="scroll-mt-24">
         <h2 className="font-semibold text-gray-900 text-lg mb-4">
           검수 대기 목록
           {reviewQueue.length > 0 && (
@@ -121,7 +133,9 @@ export default async function AdminPage() {
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <div className="w-full">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-gray-900">{worker.title}</h3>
+                            <Link href={`/market/${worker.id}`} className="font-semibold text-gray-900 hover:text-indigo-600 hover:underline">
+                              {worker.title}
+                            </Link>
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                               {statusInfo?.label}
                             </span>
@@ -139,7 +153,14 @@ export default async function AdminPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="self-start lg:self-auto">
+                    <div className="flex items-center gap-2 self-start lg:self-auto">
+                      <Link
+                        href={`/market/${worker.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        상세 보기
+                      </Link>
                       <AdminWorkerActions workerId={worker.id} currentStatus={worker.status} />
                     </div>
                   </div>
@@ -187,7 +208,9 @@ export default async function AdminPage() {
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <div className="w-full">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-gray-900">{worker.title}</h3>
+                            <Link href={`/market/${worker.id}`} className="font-semibold text-gray-900 hover:text-indigo-600 hover:underline">
+                              {worker.title}
+                            </Link>
                             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                               {statusInfo?.label}
                             </span>
@@ -233,6 +256,14 @@ export default async function AdminPage() {
         <PublishedWorkersManager workers={publishedWorkers} />
       </div>
 
+      <div id="users" className="mt-10 scroll-mt-24">
+        <div className="mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5 text-violet-600" />
+          <h2 className="font-semibold text-gray-900 text-lg">회원 관리</h2>
+        </div>
+        <AdminUserManager />
+      </div>
+
       <div id="ai-keys" className="mt-10 scroll-mt-24">
         <div className="mb-4 flex items-center gap-2">
           <KeyRound className="h-5 w-5 text-indigo-600" />
@@ -267,7 +298,9 @@ export default async function AdminPage() {
                       <CategoryThumbnail category={worker.category} className="hidden h-16 w-16 shrink-0 sm:block" compact />
                       <div className="w-full">
                         <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{worker.title}</h3>
+                          <Link href={`/market/${worker.id}`} className="font-semibold text-gray-900 hover:text-indigo-600 hover:underline">
+                            {worker.title}
+                          </Link>
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                             {statusInfo?.label}
                           </span>

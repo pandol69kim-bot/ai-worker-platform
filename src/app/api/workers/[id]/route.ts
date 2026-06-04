@@ -110,7 +110,9 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
     }
-    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+    console.error("[PATCH /api/workers/:id] Unexpected error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: `서버 오류: ${message}` }, { status: 500 });
   }
 }
 
