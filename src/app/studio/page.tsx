@@ -56,18 +56,18 @@ export default async function StudioPage() {
             return (
               <div
                 key={worker.id}
-                className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-sm sm:flex-row sm:items-center"
+                className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-sm sm:flex-row sm:items-start"
               >
                 <div className="flex items-start gap-3 sm:flex-1 sm:items-center sm:gap-4">
                   <CategoryThumbnail category={worker.category} className="h-12 w-12 shrink-0" compact />
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <h3 className="min-w-0 wrap-break-word font-semibold text-gray-900 sm:truncate">{worker.title}</h3>
+                      <h3 className="min-w-0 wrap-break-word leading-tight font-semibold text-gray-900">{worker.title}</h3>
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-700"}`}>
                         {statusInfo?.label ?? worker.status}
                       </span>
                     </div>
-                    <p className="line-clamp-2 wrap-break-word text-sm text-gray-500 sm:truncate">{worker.description}</p>
+                    <p className="wrap-break-word text-sm text-gray-500 sm:line-clamp-2">{worker.description}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
                       <span>{getCategoryLabel(worker.category)}</span>
                       <span>·</span>
@@ -81,7 +81,9 @@ export default async function StudioPage() {
                     </div>
                   </div>
                 </div>
-                <WorkerActions worker={worker} />
+                <div className="sm:ml-auto">
+                  <WorkerActions worker={worker} />
+                </div>
               </div>
             );
           })}
