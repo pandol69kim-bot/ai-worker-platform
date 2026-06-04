@@ -37,7 +37,7 @@ export function WorkerActions({ worker }: { worker: Worker }) {
   }
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
       {["approved", "published", "rejected"].includes(worker.status) && (
         <Link
           href={`/market/${worker.id}`}
@@ -60,7 +60,7 @@ export function WorkerActions({ worker }: { worker: Worker }) {
           <button
             onClick={handleSubmit}
             disabled={loading === "submit"}
-            className="flex h-8 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+            className="flex h-8 min-w-[108px] items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
             title="검수 요청"
           >
             {loading === "submit" ? (
