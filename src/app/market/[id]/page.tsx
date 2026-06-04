@@ -96,20 +96,20 @@ export default async function WorkerDetailPage({ params }: PageProps) {
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
           <div>
-            <div className="flex items-start gap-4 mb-4">
-              <CategoryThumbnail category={worker.category} className="h-16 w-16 shrink-0" compact />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{worker.title}</h1>
-                <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-start gap-3 mb-4">
+              <CategoryThumbnail category={worker.category} className="h-14 w-14 shrink-0 sm:h-16 sm:w-16" compact />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{worker.title}</h1>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-1.5">
                   <Badge variant="secondary">{getCategoryLabel(worker.category)}</Badge>
                   {showAiConfig && <Badge variant="info">{getAIProviderLabel(worker.aiProvider)}</Badge>}
                   {showAiConfig && <Badge variant="outline">{getAIModelLabel(worker.aiProvider, worker.aiModel)}</Badge>}
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <div className="flex items-center gap-1 text-xs text-gray-500 sm:text-sm">
+                    <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 sm:h-4 sm:w-4" />
                     {worker.avgRating.toFixed(1)} ({worker.reviewCount}개 리뷰)
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <Users className="h-4 w-4" />
+                  <div className="flex items-center gap-1 text-xs text-gray-500 sm:text-sm">
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     {worker.totalSales}명 도입
                   </div>
                 </div>
