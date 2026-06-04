@@ -382,17 +382,17 @@ export function AdminUserManager() {
                         {/* 펼침: 소속 AI 직원 */}
                         {isExpanded && (
                           <tr key={`${u.id}-workers`}>
-                            <td colSpan={6} className="bg-indigo-50/30 px-4 pb-3 pt-1">
+                            <td colSpan={6} className="bg-indigo-50/30 px-4 pb-3 pt-1 dark:bg-indigo-950/30">
                               <div className="ml-11 space-y-1.5">
-                                <p className="mb-1.5 text-xs font-medium text-indigo-600">AI 직원 목록</p>
+                                <p className="mb-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">AI 직원 목록</p>
                                 {userWorkers.length === 0 ? (
                                   <p className="text-xs text-gray-400">AI 직원이 없습니다.</p>
                                 ) : (
                                   userWorkers.map((w) => {
                                     const statusInfo = WORKER_STATUSES[w.status as keyof typeof WORKER_STATUSES];
                                     return (
-                                      <div key={w.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-indigo-100 bg-white px-3 py-2 text-xs">
-                                        <span className="font-medium text-gray-800">{w.title}</span>
+                                      <div key={w.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-indigo-100 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800">
+                                        <span className="font-medium text-gray-800 dark:text-slate-200">{w.title}</span>
                                         <span className={`rounded-full px-1.5 py-0.5 font-medium ${statusInfo?.color ?? "bg-gray-100 text-gray-600"}`}>
                                           {statusInfo?.label ?? w.status}
                                         </span>
