@@ -18,7 +18,7 @@ interface PageProps {
 export default async function WorkerDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await auth();
-  const user = session?.user as { id?: string } | undefined;
+  const user = session?.user as { id?: string; role?: string } | undefined;
 
   const worker = await db.aIWorker.findFirst({
     where: user?.id
@@ -131,6 +131,7 @@ export default async function WorkerDetailPage({ params }: PageProps) {
               workerId={worker.id}
               canUse={canUse}
               isFree={isFree}
+              canInspectPrompt={user?.role === "admin"}
             />
           </div>
 

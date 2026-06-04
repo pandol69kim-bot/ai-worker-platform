@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Play, Loader2, Copy, CheckCheck } from "lucide-react";
+import { Play, Loader2, Copy, CheckCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -9,21 +9,26 @@ interface WorkerExecutorProps {
   workerId: string;
   canUse: boolean;
   isFree: boolean;
+  canInspectPrompt?: boolean;
 }
 
-export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps) {
+export function WorkerExecutor({ workerId, canUse, isFree, canInspectPrompt = false }: WorkerExecutorProps) {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<{ tokens?: number; duration?: number } | null>(null);
+  const [actualPrompt, setActualPrompt] = useState("");
+  const [showPrompt, setShowPrompt] = useState(false);
 
   async function handleExecute() {
     if (!input.trim()) return;
     setError("");
     setOutput("");
     setStats(null);
+    setActualPrompt("");
+    setShowPrompt(false);
     setLoading(true);
 
     try {
@@ -42,6 +47,7 @@ export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps
 
       setOutput(data.output);
       setStats({ tokens: data.tokens, duration: data.duration });
+      setActualPrompt(typeof data.actualPrompt === "string" ? data.actualPrompt : "");
     } finally {
       setLoading(false);
     }
@@ -116,6 +122,25 @@ export function WorkerExecutor({ workerId, canUse, isFree }: WorkerExecutorProps
             <div className="worker-executor-stats mt-3 flex gap-4 border-t border-gray-100 pt-2 text-xs text-gray-400">
               {stats.tokens && <span>{stats.tokens} 토큰 사용</span>}
               {stats.duration && <span>{(stats.duration / 1000).toFixed(1)}초</span>}
+            </div>
+          )}
+
+          {canInspectPrompt && actualPrompt && (
+            <div className="mt-3 border-t border-gray-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowPrompt((currentValue) => !currentValue)}
+                className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                {showPrompt ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {showPrompt ? "실행 프롬프트 감추기" : "실행 프롬프트 보기"}
+              </button>
+
+              {showPrompt && (
+                <pre className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-900 px-3 py-3 text-xs leading-relaxed text-slate-100">
+                  {actualPrompt}
+                </pre>
+              )}
             </div>
           )}
         </div>

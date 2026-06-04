@@ -31,7 +31,7 @@ function getExecuteErrorMessage(error: unknown) {
 
 export async function POST(req: NextRequest) {
   const session = await auth();
-  const user = session?.user as { id?: string } | undefined;
+  const user = session?.user as { id?: string; role?: string } | undefined;
 
   try {
     const body = await req.json();
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const startTime = Date.now();
 
     try {
-      const { output, tokens } = await executeAIWorker(
+      const { output, tokens, systemPrompt } = await executeAIWorker(
         worker.prompt,
         worker.roleDefinition,
         worker.workflow,
@@ -105,7 +105,12 @@ export async function POST(req: NextRequest) {
         data: { output, tokens, duration, status: "completed" },
       });
 
-      return NextResponse.json({ output, tokens, duration, executionId: execution.id });
+      const actualPrompt =
+        user?.role === "admin"
+          ? `[system]\n${systemPrompt}\n\n[user]\n${input}`
+          : undefined;
+
+      return NextResponse.json({ output, tokens, duration, executionId: execution.id, actualPrompt });
     } catch (aiError) {
       await db.execution.update({
         where: { id: execution.id },
